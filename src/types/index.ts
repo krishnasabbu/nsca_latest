@@ -31,15 +31,11 @@ export interface User {
 export interface Batch {
   id: string;
   name: string;
-  schedule: string;
-  coachId: string;
-  coachName?: string;
-  students: number;
-  fees: number;
-  startDate: string;
-  endDate?: string;
-  status: 'active' | 'inactive';
   description?: string;
+  coach: string;
+  coachId: string;
+  schedule: string;
+  status: 'active' | 'inactive';
 }
 
 export interface Content {

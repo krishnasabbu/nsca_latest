@@ -29,7 +29,7 @@ export function BatchesPage() {
       setAllUsers(usersData);
       const batchesWithCounts = batchesData.map((b) => ({
         ...b,
-        students: usersData.filter((u) => u.batchId === b.id).length,
+        studentCount: usersData.filter((u) => u.batchId === b.id).length,
       }));
       setBatches(batchesWithCounts);
       setCoaches(coachesData);
@@ -91,18 +91,20 @@ export function BatchesPage() {
                 <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center space-x-2">
                     <Users size={16} className="text-green-500" />
-                    <span>{batch.students} Students</span>
+                    <span>{(batch as any).studentCount || 0} Students</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Calendar size={16} className="text-yellow-500" />
                     <span>{batch.schedule}</span>
                   </div>
                   <div className="text-gray-900 dark:text-white font-semibold">
-                    Coach: {coach?.name || 'Not Assigned'}
+                    Coach: {batch.coach || coach?.name || 'Not Assigned'}
                   </div>
-                  <div className="text-gray-900 dark:text-white font-semibold">
-                    Fee: ₹{batch.fees}
-                  </div>
+                  {batch.description && (
+                    <div className="text-gray-600 dark:text-gray-400 text-xs">
+                      {batch.description}
+                    </div>
+                  )}
                 </div>
               </CardBody>
             </Card>
@@ -123,23 +125,37 @@ export function BatchesPage() {
 }
 
 function BatchFormModal({ isOpen, onClose, batch, coaches, onSuccess }: any) {
-  const [formData, setFormData] = useState({ name: '', schedule: '', coachId: '', students: 0, fees: 0, startDate: '', status: 'active', description: '' });
+  const [formData, setFormData] = useState({ name: '', schedule: '', coachId: '', coach: '', status: 'active', description: '' });
 
   useEffect(() => {
     if (batch) {
-      setFormData({ name: batch.name || '', schedule: batch.schedule || '', coachId: batch.coachId || '', students: batch.students || 0, fees: batch.fees || 0, startDate: batch.startDate || '', status: batch.status || 'active', description: batch.description || '' });
+      setFormData({
+        name: batch.name || '',
+        schedule: batch.schedule || '',
+        coachId: batch.coachId || '',
+        coach: batch.coach || '',
+        status: batch.status || 'active',
+        description: batch.description || ''
+      });
     } else {
-      setFormData({ name: '', schedule: '', coachId: '', students: 0, fees: 0, startDate: '', status: 'active', description: '' });
+      setFormData({ name: '', schedule: '', coachId: '', coach: '', status: 'active', description: '' });
     }
   }, [batch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const selectedCoach = coaches.find((c: User) => c.id === formData.coachId);
+      const submitData = {
+        ...formData,
+        coach: selectedCoach?.name || formData.coach,
+        status: formData.status as 'active' | 'inactive'
+      };
+
       if (batch) {
-        await api.batches.update({ id: batch.id, ...formData, status: formData.status as 'active' | 'inactive' });
+        await api.batches.update({ id: batch.id, ...submitData });
       } else {
-        await api.batches.create({ ...formData, status: formData.status as 'active' | 'inactive' });
+        await api.batches.create(submitData);
       }
       onSuccess();
       onClose();
@@ -157,27 +173,15 @@ function BatchFormModal({ isOpen, onClose, batch, coaches, onSuccess }: any) {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Schedule</label>
-            <input type="text" placeholder="e.g., Mon-Fri 6-8 PM" value={formData.schedule} onChange={(e) => setFormData({ ...formData, schedule: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Schedule *</label>
+            <input type="text" placeholder="e.g., Mon-Fri 6-8 PM" value={formData.schedule} onChange={(e) => setFormData({ ...formData, schedule: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Coach</label>
-            <select value={formData.coachId} onChange={(e) => setFormData({ ...formData, coachId: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Coach *</label>
+            <select value={formData.coachId} onChange={(e) => setFormData({ ...formData, coachId: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" required>
               <option value="">Select Coach</option>
               {coaches.map((coach: User) => <option key={coach.id} value={coach.id}>{coach.name}</option>)}
             </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Students</label>
-            <input type="number" value={formData.students} onChange={(e) => setFormData({ ...formData, students: parseInt(e.target.value) || 0 })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monthly Fee (₹)</label>
-            <input type="number" value={formData.fees} onChange={(e) => setFormData({ ...formData, fees: parseInt(e.target.value) || 0 })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Date</label>
-            <input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
@@ -189,7 +193,7 @@ function BatchFormModal({ isOpen, onClose, batch, coaches, onSuccess }: any) {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
-          <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"></textarea>
+          <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" placeholder="Brief description of the batch"></textarea>
         </div>
         <div className="flex justify-end space-x-3 pt-4">
           <button type="button" onClick={onClose} className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
@@ -213,20 +217,23 @@ function BatchStudentsModal({ isOpen, onClose, batch, students }: BatchStudentsM
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Students in ${batch.name}`} size="lg">
       <div className="space-y-4">
-        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-          <div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex items-start justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex-1">
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
               Total Students: <span className="font-semibold text-gray-900 dark:text-white">{students.length}</span>
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
               Schedule: <span className="font-medium text-gray-900 dark:text-white">{batch.schedule}</span>
             </div>
-          </div>
-          <div className="text-right">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Monthly Fee: <span className="font-semibold text-gray-900 dark:text-white">₹{batch.fees}</span>
+              Coach: <span className="font-medium text-gray-900 dark:text-white">{batch.coach}</span>
             </div>
           </div>
+          {batch.description && (
+            <div className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
+              {batch.description}
+            </div>
+          )}
         </div>
 
         {students.length === 0 ? (
