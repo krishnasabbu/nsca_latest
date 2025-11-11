@@ -40,11 +40,12 @@ export function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6">
           <div className="text-center space-y-2">
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-4 p-4 bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-900 dark:to-gray-900 rounded-xl">
               <img
                 src="/WhatsApp Image 2025-11-11 at 5.32.58 PM.jpeg"
                 alt="Nature Space Cricket Academy"
-                className="w-full h-auto max-w-[250px]"
+                className="w-full h-auto max-w-[250px] mix-blend-multiply dark:mix-blend-normal dark:brightness-110"
+                style={{ imageRendering: 'crisp-edges' }}
               />
             </div>
             <p className="text-gray-600 dark:text-gray-400">Sign in to continue</p>
