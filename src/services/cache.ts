@@ -1,5 +1,5 @@
 const DB_NAME = 'CricketAcademyCache';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 interface CacheEntry<T> {
   data: T;
@@ -29,21 +29,16 @@ class CacheManager {
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
 
-        const stores = [
-          'users',
-          'batches',
-          'content',
-          'attendance',
-          'yoyoTest',
-          'fees',
-          'analytics',
-        ];
-
-        stores.forEach((storeName) => {
-          if (!db.objectStoreNames.contains(storeName)) {
-            db.createObjectStore(storeName);
+        const oldStores = ['users', 'batches', 'content', 'attendance', 'yoyoTest', 'fees', 'analytics'];
+        oldStores.forEach((storeName) => {
+          if (db.objectStoreNames.contains(storeName)) {
+            db.deleteObjectStore(storeName);
           }
         });
+
+        if (!db.objectStoreNames.contains('cache')) {
+          db.createObjectStore('cache');
+        }
       };
     });
 
@@ -117,29 +112,19 @@ class CacheManager {
     await this.initDB();
     if (!this.db) return;
 
-    const stores = [
-      'users',
-      'batches',
-      'content',
-      'attendance',
-      'yoyoTest',
-      'fees',
-      'analytics',
-    ];
-
-    await Promise.all(stores.map((store) => this.clear(store)));
+    return this.clear('cache');
   }
 
-  async getLastSyncTime(store: string): Promise<number | null> {
+  async getLastSyncTime(key: string): Promise<number | null> {
     const syncData = await this.get<{ timestamp: number }>(
-      store,
-      '__last_sync__'
+      'cache',
+      `__last_sync__${key}`
     );
     return syncData?.timestamp || null;
   }
 
-  async setLastSyncTime(store: string): Promise<void> {
-    await this.set(store, '__last_sync__', { timestamp: Date.now() });
+  async setLastSyncTime(key: string): Promise<void> {
+    await this.set('cache', `__last_sync__${key}`, { timestamp: Date.now() });
   }
 }
 
