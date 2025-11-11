@@ -26,11 +26,12 @@ export function FeesPage() {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (forceSync: boolean = false) => {
     try {
+      if (forceSync) setLoading(true);
       const [users, fees] = await Promise.all([
-        api.users.list(),
-        api.fees.list(),
+        api.users.list(forceSync),
+        api.fees.list(forceSync),
       ]);
       const studentsList = users.filter((u) => u.role === 'student');
       setStudents(studentsList);

@@ -1,4 +1,5 @@
 import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord } from '../types';
+import { cacheManager } from './cache';
 
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxcGtEsqgOBrBCCCxQqZYIFBYcJnCCth0U2CbTl1b3vvdhdKuS6tP3JtpKGh962cIOA/exec';
 
@@ -12,7 +13,33 @@ const handleResponse = async (response: Response) => {
   return data;
 };
 
+const fetchWithCache = async <T>(
+  cacheKey: string,
+  fetchFn: () => Promise<T>,
+  useCache: boolean = true
+): Promise<T> => {
+  if (useCache) {
+    const cached = await cacheManager.get<T>('cache', cacheKey);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  const data = await fetchFn();
+  await cacheManager.set('cache', cacheKey, data);
+  return data;
+};
+
 export const api = {
+  cache: {
+    clearAll: async () => {
+      await cacheManager.clearAll();
+    },
+    getLastSyncTime: async (store: string) => {
+      return cacheManager.getLastSyncTime(store);
+    },
+  },
+
   auth: {
     login: async (phone: string, password: string): Promise<User> => {
       const response = await fetch(API_BASE_URL, {
@@ -40,11 +67,19 @@ export const api = {
   },
 
   users: {
-    list: async (): Promise<User[]> => {
-      const response = await fetch(`${API_BASE_URL}?action=listUsers`, {
-        redirect: 'follow',
-      });
-      return handleResponse(response);
+    list: async (forceSync: boolean = false): Promise<User[]> => {
+      return fetchWithCache(
+        'users_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listUsers`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('users');
+          return data;
+        },
+        !forceSync
+      );
     },
 
     get: async (id: string): Promise<User> => {
@@ -63,7 +98,9 @@ export const api = {
         body: JSON.stringify({ action: 'createUser', ...userData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'users_list');
+      return result;
     },
 
     upsert: async (userData: Partial<User>) => {
@@ -75,7 +112,9 @@ export const api = {
         body: JSON.stringify({ action: 'upsertUser', ...userData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'users_list');
+      return result;
     },
 
     delete: async (id: string) => {
@@ -87,30 +126,52 @@ export const api = {
         body: JSON.stringify({ action: 'deleteUser', id }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'users_list');
+      return result;
     },
 
-    getCoaches: async (): Promise<User[]> => {
-      const response = await fetch(`${API_BASE_URL}?action=getCoaches`, {
-        redirect: 'follow',
-      });
-      return handleResponse(response);
+    getCoaches: async (forceSync: boolean = false): Promise<User[]> => {
+      return fetchWithCache(
+        'coaches_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=getCoaches`, {
+            redirect: 'follow',
+          });
+          return handleResponse(response);
+        },
+        !forceSync
+      );
     },
 
-    getCoachStudents: async (coachId: string): Promise<User[]> => {
-      const response = await fetch(`${API_BASE_URL}?action=getCoachStudents&coachId=${coachId}`, {
-        redirect: 'follow',
-      });
-      return handleResponse(response);
+    getCoachStudents: async (coachId: string, forceSync: boolean = false): Promise<User[]> => {
+      return fetchWithCache(
+        `coach_students_${coachId}`,
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=getCoachStudents&coachId=${coachId}`, {
+            redirect: 'follow',
+          });
+          return handleResponse(response);
+        },
+        !forceSync
+      );
     },
   },
 
   batches: {
-    list: async (): Promise<Batch[]> => {
-      const response = await fetch(`${API_BASE_URL}?action=listBatches`, {
-        redirect: 'follow',
-      });
-      return handleResponse(response);
+    list: async (forceSync: boolean = false): Promise<Batch[]> => {
+      return fetchWithCache(
+        'batches_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listBatches`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('batches');
+          return data;
+        },
+        !forceSync
+      );
     },
 
     create: async (batchData: Partial<Batch>) => {
@@ -122,7 +183,9 @@ export const api = {
         body: JSON.stringify({ action: 'createBatch', ...batchData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'batches_list');
+      return result;
     },
 
     update: async (batchData: Partial<Batch>) => {
@@ -134,7 +197,9 @@ export const api = {
         body: JSON.stringify({ action: 'updateBatch', ...batchData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'batches_list');
+      return result;
     },
 
     delete: async (id: string) => {
@@ -146,16 +211,26 @@ export const api = {
         body: JSON.stringify({ action: 'deleteBatch', id }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'batches_list');
+      return result;
     },
   },
 
   content: {
-    list: async (): Promise<Content[]> => {
-      const response = await fetch(`${API_BASE_URL}?action=listContent`, {
-        redirect: 'follow',
-      });
-      return handleResponse(response);
+    list: async (forceSync: boolean = false): Promise<Content[]> => {
+      return fetchWithCache(
+        'content_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listContent`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('content');
+          return data;
+        },
+        !forceSync
+      );
     },
 
     create: async (contentData: Partial<Content>) => {
@@ -167,7 +242,9 @@ export const api = {
         body: JSON.stringify({ action: 'createContent', ...contentData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'content_list');
+      return result;
     },
 
     update: async (contentData: Partial<Content>) => {
@@ -179,7 +256,9 @@ export const api = {
         body: JSON.stringify({ action: 'updateContent', ...contentData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'content_list');
+      return result;
     },
 
     delete: async (id: string) => {
@@ -191,16 +270,26 @@ export const api = {
         body: JSON.stringify({ action: 'deleteContent', id }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'content_list');
+      return result;
     },
   },
 
   attendance: {
-    list: async (): Promise<Attendance[]> => {
-      const response = await fetch(`${API_BASE_URL}?action=listAttendanceRecords`, {
-        redirect: 'follow',
-      });
-      return handleResponse(response);
+    list: async (forceSync: boolean = false): Promise<Attendance[]> => {
+      return fetchWithCache(
+        'attendance_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listAttendanceRecords`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('attendance');
+          return data;
+        },
+        !forceSync
+      );
     },
 
     create: async (attendanceData: Partial<Attendance>) => {
@@ -212,7 +301,9 @@ export const api = {
         body: JSON.stringify({ action: 'createAttendanceRecord', ...attendanceData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'attendance_list');
+      return result;
     },
 
     update: async (attendanceData: Partial<Attendance>) => {
@@ -224,7 +315,9 @@ export const api = {
         body: JSON.stringify({ action: 'updateAttendanceRecord', ...attendanceData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'attendance_list');
+      return result;
     },
 
     markAttendance: async (attendanceData: Partial<Attendance>) => {
@@ -236,16 +329,26 @@ export const api = {
         body: JSON.stringify({ action: 'markAttendance', ...attendanceData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'attendance_list');
+      return result;
     },
   },
 
   yoyoTest: {
-    list: async (): Promise<YoyoTestResult[]> => {
-      const response = await fetch(`${API_BASE_URL}?action=listYoyoTestResults`, {
-        redirect: 'follow',
-      });
-      return handleResponse(response);
+    list: async (forceSync: boolean = false): Promise<YoyoTestResult[]> => {
+      return fetchWithCache(
+        'yoyotest_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listYoyoTestResults`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('yoyoTest');
+          return data;
+        },
+        !forceSync
+      );
     },
 
     create: async (testData: Partial<YoyoTestResult>) => {
@@ -257,7 +360,9 @@ export const api = {
         body: JSON.stringify({ action: 'createYoyoTestResult', ...testData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'yoyotest_list');
+      return result;
     },
 
     update: async (testData: Partial<YoyoTestResult>) => {
@@ -269,7 +374,9 @@ export const api = {
         body: JSON.stringify({ action: 'updateYoyoTestResult', ...testData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'yoyotest_list');
+      return result;
     },
 
     delete: async (id: string) => {
@@ -281,25 +388,43 @@ export const api = {
         body: JSON.stringify({ action: 'deleteYoyoTestResult', id }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'yoyotest_list');
+      return result;
     },
   },
 
   analytics: {
-    getOverview: async (): Promise<Analytics> => {
-      const response = await fetch(`${API_BASE_URL}?action=getAnalyticsOverview`, {
-        redirect: 'follow',
-      });
-      return handleResponse(response);
+    getOverview: async (forceSync: boolean = false): Promise<Analytics> => {
+      return fetchWithCache(
+        'analytics_overview',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=getAnalyticsOverview`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('analytics');
+          return data;
+        },
+        !forceSync
+      );
     },
   },
 
   fees: {
-    list: async (): Promise<FeeRecord[]> => {
-      const response = await fetch(`${API_BASE_URL}?action=listFees`, {
-        redirect: 'follow',
-      });
-      return handleResponse(response);
+    list: async (forceSync: boolean = false): Promise<FeeRecord[]> => {
+      return fetchWithCache(
+        'fees_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listFees`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('fees');
+          return data;
+        },
+        !forceSync
+      );
     },
 
     get: async (id: string): Promise<FeeRecord> => {
@@ -309,11 +434,17 @@ export const api = {
       return handleResponse(response);
     },
 
-    listByUser: async (userid: string): Promise<FeeRecord[]> => {
-      const response = await fetch(`${API_BASE_URL}?action=listFeesByUser&userid=${userid}`, {
-        redirect: 'follow',
-      });
-      return handleResponse(response);
+    listByUser: async (userid: string, forceSync: boolean = false): Promise<FeeRecord[]> => {
+      return fetchWithCache(
+        `fees_user_${userid}`,
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listFeesByUser&userid=${userid}`, {
+            redirect: 'follow',
+          });
+          return handleResponse(response);
+        },
+        !forceSync
+      );
     },
 
     filterByDate: async (startDate: string, endDate?: string): Promise<FeeRecord[]> => {
@@ -336,7 +467,9 @@ export const api = {
         body: JSON.stringify({ action: 'createFee', ...feeData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'fees_list');
+      return result;
     },
 
     update: async (feeData: Partial<FeeRecord>) => {
@@ -348,7 +481,9 @@ export const api = {
         body: JSON.stringify({ action: 'updateFee', ...feeData }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'fees_list');
+      return result;
     },
 
     delete: async (id: string) => {
@@ -360,7 +495,9 @@ export const api = {
         body: JSON.stringify({ action: 'deleteFee', id }),
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'fees_list');
+      return result;
     },
   },
 };
