@@ -8,9 +8,12 @@ import { Batch, User } from '../../types';
 export function BatchesPage() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [coaches, setCoaches] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStudentsModalOpen, setIsStudentsModalOpen] = useState(false);
   const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
+  const [viewingBatch, setViewingBatch] = useState<Batch | null>(null);
 
   useEffect(() => {
     loadData();
@@ -18,11 +21,17 @@ export function BatchesPage() {
 
   const loadData = async () => {
     try {
-      const [batchesData, coachesData] = await Promise.all([
+      const [batchesData, coachesData, usersData] = await Promise.all([
         api.batches.list(),
         api.users.getCoaches(),
+        api.users.list(),
       ]);
-      setBatches(batchesData);
+      setAllUsers(usersData);
+      const batchesWithCounts = batchesData.map((b) => ({
+        ...b,
+        students: usersData.filter((u) => u.batchId === b.id).length,
+      }));
+      setBatches(batchesWithCounts);
       setCoaches(coachesData);
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -68,6 +77,13 @@ export function BatchesPage() {
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${batch.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400'}`}>{batch.status}</span>
                   </div>
                   <div className="flex space-x-1">
+                    <button
+                      onClick={() => { setViewingBatch(batch); setIsStudentsModalOpen(true); }}
+                      className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg"
+                      title="View Students"
+                    >
+                      <Users size={16} />
+                    </button>
                     <button onClick={() => { setEditingBatch(batch); setIsModalOpen(true); }} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"><Edit size={16} /></button>
                     <button onClick={() => handleDelete(batch.id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><Trash2 size={16} /></button>
                   </div>
@@ -95,6 +111,13 @@ export function BatchesPage() {
       </div>
 
       <BatchFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} batch={editingBatch} coaches={coaches} onSuccess={loadData} />
+
+      <BatchStudentsModal
+        isOpen={isStudentsModalOpen}
+        onClose={() => setIsStudentsModalOpen(false)}
+        batch={viewingBatch}
+        students={allUsers.filter((u) => u.batchId === viewingBatch?.id)}
+      />
     </div>
   );
 }
@@ -173,6 +196,74 @@ function BatchFormModal({ isOpen, onClose, batch, coaches, onSuccess }: any) {
           <button type="submit" className="px-6 py-2 bg-gradient-to-r from-green-600 to-yellow-500 text-white rounded-lg hover:from-green-700 hover:to-yellow-600">{batch ? 'Update' : 'Create'} Batch</button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+interface BatchStudentsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  batch: Batch | null;
+  students: User[];
+}
+
+function BatchStudentsModal({ isOpen, onClose, batch, students }: BatchStudentsModalProps) {
+  if (!batch) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={`Students in ${batch.name}`} size="lg">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Total Students: <span className="font-semibold text-gray-900 dark:text-white">{students.length}</span>
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Schedule: <span className="font-medium text-gray-900 dark:text-white">{batch.schedule}</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Monthly Fee: <span className="font-semibold text-gray-900 dark:text-white">₹{batch.fees}</span>
+            </div>
+          </div>
+        </div>
+
+        {students.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            No students enrolled in this batch yet.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {students.map((student) => (
+              <div
+                key={student.id}
+                className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-full flex items-center justify-center text-white font-semibold">
+                      {student.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">{student.name}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{student.phone}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {student.skillLevel || 'N/A'}
+                    </p>
+                    {student.coachingType && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{student.coachingType}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </Modal>
   );
 }

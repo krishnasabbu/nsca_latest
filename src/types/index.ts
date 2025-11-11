@@ -7,6 +7,11 @@ export interface User {
   age?: string;
   batch?: string;
   batchId?: string;
+  fatherName?: string;
+  motherName?: string;
+  altPhone?: string;
+  coachingType?: 'Normal' | 'Special';
+  monthlyFee?: number;
   specialization?: string;
   joinDate?: string;
   status?: 'active' | 'inactive';

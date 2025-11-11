@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/UI/Card';
 import { Modal } from '../../components/UI/Modal';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Users } from 'lucide-react';
 import { api } from '../../services/api';
 import { User } from '../../types';
 
 export function StaffPage() {
   const [staff, setStaff] = useState<User[]>([]);
   const [filteredStaff, setFilteredStaff] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStudentsModalOpen, setIsStudentsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<User | null>(null);
+  const [viewingCoach, setViewingCoach] = useState<User | null>(null);
 
   useEffect(() => {
     loadStaff();
@@ -30,8 +33,13 @@ export function StaffPage() {
   const loadStaff = async () => {
     try {
       const users = await api.users.list();
+      setAllUsers(users);
       const staffList = users.filter((u) => u.role === 'coach' || u.role === 'support');
-      setStaff(staffList);
+      const staffWithCounts = staffList.map((s) => ({
+        ...s,
+        studentsCount: s.role === 'coach' ? users.filter((u) => u.assignedCoachId === s.id).length : 0,
+      }));
+      setStaff(staffWithCounts);
     } catch (error) {
       console.error('Failed to load staff:', error);
     } finally {
@@ -100,6 +108,15 @@ export function StaffPage() {
                     </div>
                   </div>
                   <div className="flex space-x-1">
+                    {member.role === 'coach' && (
+                      <button
+                        onClick={() => { setViewingCoach(member); setIsStudentsModalOpen(true); }}
+                        className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg"
+                        title="View Students"
+                      >
+                        <Users size={16} />
+                      </button>
+                    )}
                     <button onClick={() => { setEditingStaff(member); setIsModalOpen(true); }} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg">
                       <Edit size={16} />
                     </button>
@@ -125,6 +142,13 @@ export function StaffPage() {
         onClose={() => setIsModalOpen(false)}
         staff={editingStaff}
         onSuccess={loadStaff}
+      />
+
+      <CoachStudentsModal
+        isOpen={isStudentsModalOpen}
+        onClose={() => setIsStudentsModalOpen(false)}
+        coach={viewingCoach}
+        students={allUsers.filter((u) => u.assignedCoachId === viewingCoach?.id)}
       />
     </div>
   );
@@ -201,6 +225,60 @@ function StaffFormModal({ isOpen, onClose, staff, onSuccess }: any) {
           <button type="submit" className="px-6 py-2 bg-gradient-to-r from-green-600 to-yellow-500 text-white rounded-lg hover:from-green-700 hover:to-yellow-600">{staff ? 'Update' : 'Add'} Staff</button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+interface CoachStudentsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  coach: User | null;
+  students: User[];
+}
+
+function CoachStudentsModal({ isOpen, onClose, coach, students }: CoachStudentsModalProps) {
+  if (!coach) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={`Students Assigned to ${coach.name}`} size="lg">
+      <div className="space-y-4">
+        <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Total Students: <span className="font-semibold text-gray-900 dark:text-white">{students.length}</span>
+        </div>
+
+        {students.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            No students assigned to this coach yet.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {students.map((student) => (
+              <div
+                key={student.id}
+                className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-full flex items-center justify-center text-white font-semibold">
+                      {student.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">{student.name}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{student.phone}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {student.batch && (
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{student.batch}</p>
+                    )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{student.skillLevel || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </Modal>
   );
 }
