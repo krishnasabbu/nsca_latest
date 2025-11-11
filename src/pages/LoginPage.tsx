@@ -40,12 +40,13 @@ export function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6">
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-yellow-500 rounded-full mb-4">
-              <span className="text-2xl font-bold text-white">NS</span>
+            <div className="flex justify-center mb-4">
+              <img
+                src="/WhatsApp Image 2025-11-11 at 5.32.58 PM.jpeg"
+                alt="Nature Space Cricket Academy"
+                className="w-full h-auto max-w-[250px]"
+              />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Nature Space Cricket Academy
-            </h1>
             <p className="text-gray-600 dark:text-gray-400">Sign in to continue</p>
           </div>
 

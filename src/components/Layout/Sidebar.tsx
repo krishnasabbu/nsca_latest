@@ -60,15 +60,13 @@ export function Sidebar() {
       </button>
 
       <aside className={`fixed left-0 top-0 h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all z-40 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">NS</span>
-          </div>
-          <div>
-            <h2 className="font-bold text-gray-900 dark:text-white">Nature Space</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Cricket Academy</p>
-          </div>
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-center">
+          <img
+            src="/WhatsApp Image 2025-11-11 at 5.32.58 PM.jpeg"
+            alt="Nature Space Cricket Academy"
+            className="w-full h-auto max-w-[200px]"
+          />
         </div>
       </div>
 
