@@ -29,14 +29,19 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
 }
 
 function App() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated, user } = useAuthStore();
+
+  const getDashboardPath = () => {
+    if (!isAuthenticated || !user) return '/';
+    return user.role === 'admin' ? '/admin' : '/coach';
+  };
 
   return (
     <BrowserRouter>
       <Routes>
         <Route
           path="/"
-          element={isAuthenticated ? <Navigate to="/admin" replace /> : <LoginPage />}
+          element={isAuthenticated ? <Navigate to={getDashboardPath()} replace /> : <LoginPage />}
         />
 
         <Route
