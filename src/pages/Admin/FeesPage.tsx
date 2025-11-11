@@ -108,7 +108,7 @@ export function FeesPage() {
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
       student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.phone?.includes(searchTerm);
+      String(student.phone || '').includes(searchTerm);
 
     if (!matchesSearch) return false;
 

@@ -52,7 +52,7 @@ export function PlayersPage() {
       filtered = filtered.filter(
         (p) =>
           p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.phone?.includes(searchTerm)
+          String(p.phone || '').includes(searchTerm)
       );
     }
 

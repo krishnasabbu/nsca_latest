@@ -24,7 +24,7 @@ export function StaffPage() {
     const filtered = staff.filter(
       (s) =>
         s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.phone?.includes(searchTerm) ||
+        String(s.phone || '').includes(searchTerm) ||
         s.role?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredStaff(filtered);
