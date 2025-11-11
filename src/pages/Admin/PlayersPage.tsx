@@ -772,20 +772,6 @@ function PlayerProfileModal({ isOpen, onClose, player, coach, batch }: PlayerPro
             </div>
           )}
 
-          {player.fatherName && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Father's Name</h3>
-              <p className="text-gray-900 dark:text-white">{player.fatherName}</p>
-            </div>
-          )}
-
-          {player.motherName && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Mother's Name</h3>
-              <p className="text-gray-900 dark:text-white">{player.motherName}</p>
-            </div>
-          )}
-
           <div>
             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Batch</h3>
             <p className="text-gray-900 dark:text-white">{batch?.name || '-'}</p>
@@ -809,11 +795,39 @@ function PlayerProfileModal({ isOpen, onClose, player, coach, batch }: PlayerPro
               <p className="text-gray-900 dark:text-white">₹{player.monthlyFee}</p>
             </div>
           )}
+
+          {player.joinDate && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Join Date</h3>
+              <p className="text-gray-900 dark:text-white">{new Date(player.joinDate).toLocaleDateString()}</p>
+            </div>
+          )}
+
+          {player.upi && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">UPI ID</h3>
+              <p className="text-gray-900 dark:text-white">{player.upi}</p>
+            </div>
+          )}
         </div>
 
         <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cricket Details</h3>
           <div className="grid grid-cols-2 gap-6">
+            {player.specialization && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Specialization</h3>
+                <p className="text-gray-900 dark:text-white">{player.specialization}</p>
+              </div>
+            )}
+
+            {player.skillLevel && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Skill Level</h3>
+                <p className="text-gray-900 dark:text-white">{player.skillLevel}</p>
+              </div>
+            )}
+
             {player.battingStyle && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Batting Style</h3>
@@ -828,28 +842,28 @@ function PlayerProfileModal({ isOpen, onClose, player, coach, batch }: PlayerPro
               </div>
             )}
 
-            {player.skillLevel && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Skill Level</h3>
-                <p className="text-gray-900 dark:text-white">{player.skillLevel}</p>
-              </div>
-            )}
-
             {player.fitnessLevel && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Fitness Level</h3>
                 <p className="text-gray-900 dark:text-white">{player.fitnessLevel}</p>
               </div>
             )}
+
+            {player.experience && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Experience</h3>
+                <p className="text-gray-900 dark:text-white">{player.experience} years</p>
+              </div>
+            )}
+
+            {player.rating !== undefined && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Rating</h3>
+                <p className="text-gray-900 dark:text-white">{player.rating} / 10</p>
+              </div>
+            )}
           </div>
         </div>
-
-        {player.joinDate && (
-          <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Join Date</h3>
-            <p className="text-gray-900 dark:text-white">{new Date(player.joinDate).toLocaleDateString()}</p>
-          </div>
-        )}
       </div>
     </Modal>
   );
