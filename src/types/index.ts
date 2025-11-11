@@ -3,15 +3,11 @@ export interface User {
   name: string;
   phone: string;
   email: string;
+  password?: string;
   role: 'admin' | 'coach' | 'student' | 'support';
   age?: string;
   batch?: string;
   batchId?: string;
-  fatherName?: string;
-  motherName?: string;
-  altPhone?: string;
-  coachingType?: 'Normal' | 'Special';
-  monthlyFee?: number;
   specialization?: string;
   joinDate?: string;
   status?: 'active' | 'inactive';
@@ -26,6 +22,10 @@ export interface User {
   permissions?: string[];
   assignedCoachId?: string;
   isFirstLogin?: boolean;
+  coachingType?: 'Normal' | 'Special';
+  monthlyFee?: number;
+  altPhone?: string;
+  upi?: string;
 }
 
 export interface Batch {

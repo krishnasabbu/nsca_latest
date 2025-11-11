@@ -309,8 +309,6 @@ function PlayerFormModal({ isOpen, onClose, player, coaches, batches, onSuccess 
     password: '',
     age: '',
     batchId: '',
-    fatherName: '',
-    motherName: '',
     altPhone: '',
     coachingType: '',
     monthlyFee: '',
@@ -318,6 +316,12 @@ function PlayerFormModal({ isOpen, onClose, player, coaches, batches, onSuccess 
     battingStyle: '',
     bowlingStyle: '',
     skillLevel: '',
+    specialization: '',
+    joinDate: '',
+    fitnessLevel: '',
+    experience: '',
+    rating: '',
+    upi: '',
     status: 'active',
   });
   const [loading, setLoading] = useState(false);
@@ -331,8 +335,6 @@ function PlayerFormModal({ isOpen, onClose, player, coaches, batches, onSuccess 
         password: '',
         age: player.age || '',
         batchId: player.batchId || '',
-        fatherName: player.fatherName || '',
-        motherName: player.motherName || '',
         altPhone: player.altPhone || '',
         coachingType: player.coachingType || '',
         monthlyFee: player.monthlyFee?.toString() || '',
@@ -340,6 +342,12 @@ function PlayerFormModal({ isOpen, onClose, player, coaches, batches, onSuccess 
         battingStyle: player.battingStyle || '',
         bowlingStyle: player.bowlingStyle || '',
         skillLevel: player.skillLevel || '',
+        specialization: player.specialization || '',
+        joinDate: player.joinDate || '',
+        fitnessLevel: player.fitnessLevel || '',
+        experience: player.experience || '',
+        rating: player.rating?.toString() || '',
+        upi: player.upi || '',
         status: player.status || 'active',
       });
     } else {
@@ -350,8 +358,6 @@ function PlayerFormModal({ isOpen, onClose, player, coaches, batches, onSuccess 
         password: '',
         age: '',
         batchId: '',
-        fatherName: '',
-        motherName: '',
         altPhone: '',
         coachingType: '',
         monthlyFee: '',
@@ -359,6 +365,12 @@ function PlayerFormModal({ isOpen, onClose, player, coaches, batches, onSuccess 
         battingStyle: '',
         bowlingStyle: '',
         skillLevel: '',
+        specialization: '',
+        joinDate: '',
+        fitnessLevel: '',
+        experience: '',
+        rating: '',
+        upi: '',
         status: 'active',
       });
     }
@@ -548,24 +560,69 @@ function PlayerFormModal({ isOpen, onClose, player, coaches, batches, onSuccess 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Father's Name
+              Specialization
             </label>
             <input
               type="text"
-              value={formData.fatherName}
-              onChange={(e) => setFormData({ ...formData, fatherName: e.target.value })}
+              value={formData.specialization}
+              onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="e.g., Batsman, Bowler, All-rounder"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Join Date
+            </label>
+            <input
+              type="date"
+              value={formData.joinDate}
+              onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Mother's Name
+              Fitness Level
+            </label>
+            <select
+              value={formData.fitnessLevel}
+              onChange={(e) => setFormData({ ...formData, fitnessLevel: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="">Select Level</option>
+              <option value="Poor">Poor</option>
+              <option value="Average">Average</option>
+              <option value="Good">Good</option>
+              <option value="Excellent">Excellent</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Experience (Years)
             </label>
             <input
               type="text"
-              value={formData.motherName}
-              onChange={(e) => setFormData({ ...formData, motherName: e.target.value })}
+              value={formData.experience}
+              onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Rating (1-10)
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="10"
+              step="0.1"
+              value={formData.rating}
+              onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
@@ -579,6 +636,19 @@ function PlayerFormModal({ isOpen, onClose, player, coaches, batches, onSuccess 
               value={formData.altPhone}
               onChange={(e) => setFormData({ ...formData, altPhone: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              UPI ID
+            </label>
+            <input
+              type="text"
+              value={formData.upi}
+              onChange={(e) => setFormData({ ...formData, upi: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="example@upi"
             />
           </div>
 
