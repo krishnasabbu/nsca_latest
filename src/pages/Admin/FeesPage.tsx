@@ -42,24 +42,46 @@ export function FeesPage() {
     }
   };
 
-  const parseDate = (dateStr: string) => {
+  const parseDate = (dateStr: string | Date) => {
     try {
-      const parts = dateStr.split('-');
-      if (parts.length === 3) {
-        const [day, month, year] = parts.map(Number);
-        return new Date(year, month - 1, day);
+      if (dateStr instanceof Date) {
+        return dateStr;
       }
+
+      if (typeof dateStr === 'string') {
+        if (dateStr.includes('T') || dateStr.includes('Z')) {
+          return new Date(dateStr);
+        }
+
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          if (parts[0].length === 4) {
+            return new Date(dateStr);
+          } else {
+            const [day, month, year] = parts.map(Number);
+            return new Date(year, month - 1, day);
+          }
+        }
+      }
+
       return new Date(dateStr);
-    } catch {
+    } catch (e) {
+      console.error('Date parse error:', e, dateStr);
       return new Date();
     }
   };
 
   const getMonthYearFees = () => {
-    return feeRecords.filter((fee) => {
+    const filtered = feeRecords.filter((fee) => {
       const feeDate = parseDate(fee.date);
-      return feeDate.getMonth() + 1 === selectedMonth && feeDate.getFullYear() === selectedYear;
+      const feeMonth = feeDate.getMonth() + 1;
+      const feeYear = feeDate.getFullYear();
+      const matches = feeMonth === selectedMonth && feeYear === selectedYear;
+
+      return matches;
     });
+
+    return filtered;
   };
 
   const calculateStats = () => {
@@ -556,11 +578,38 @@ interface StudentLedgerModalProps {
 function StudentLedgerModal({ isOpen, onClose, student, feeRecords, onDelete }: StudentLedgerModalProps) {
   if (!student) return null;
 
+  const parseDate = (dateStr: string | Date) => {
+    try {
+      if (dateStr instanceof Date) return dateStr;
+      if (typeof dateStr === 'string' && (dateStr.includes('T') || dateStr.includes('Z'))) {
+        return new Date(dateStr);
+      }
+      const parts = dateStr.split('-');
+      if (parts.length === 3 && parts[0].length === 4) {
+        return new Date(dateStr);
+      } else if (parts.length === 3) {
+        const [day, month, year] = parts.map(Number);
+        return new Date(year, month - 1, day);
+      }
+      return new Date(dateStr);
+    } catch {
+      return new Date();
+    }
+  };
+
+  const formatDate = (dateStr: string | Date) => {
+    const date = parseDate(dateStr);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   const studentFees = feeRecords
     .filter((fee) => fee.userid === student.id)
     .sort((a, b) => {
-      const dateA = new Date(a.date.split('-').reverse().join('-'));
-      const dateB = new Date(b.date.split('-').reverse().join('-'));
+      const dateA = parseDate(a.date);
+      const dateB = parseDate(b.date);
       return dateB.getTime() - dateA.getTime();
     });
 
@@ -618,7 +667,7 @@ function StudentLedgerModal({ isOpen, onClose, student, feeRecords, onDelete }: 
               <tbody>
                 {studentFees.map((fee) => (
                   <tr key={fee.id} className="border-b border-gray-100 dark:border-gray-800">
-                    <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{fee.date}</td>
+                    <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{formatDate(fee.date)}</td>
                     <td className="py-3 px-4 font-semibold text-green-600">₹{Number(fee.amount).toLocaleString()}</td>
                     <td className="py-3 px-4 text-gray-600 dark:text-gray-400 capitalize">
                       {fee.paidType.replace('_', ' ')}
