@@ -47,23 +47,6 @@ export function FeesPage() {
       if (dateStr instanceof Date) {
         return dateStr;
       }
-
-      if (typeof dateStr === 'string') {
-        if (dateStr.includes('T') || dateStr.includes('Z')) {
-          return new Date(dateStr);
-        }
-
-        const parts = dateStr.split('-');
-        if (parts.length === 3) {
-          if (parts[0].length === 4) {
-            return new Date(dateStr);
-          } else {
-            const [day, month, year] = parts.map(Number);
-            return new Date(year, month - 1, day);
-          }
-        }
-      }
-
       return new Date(dateStr);
     } catch (e) {
       console.error('Date parse error:', e, dateStr);
@@ -421,9 +404,8 @@ function PaymentModal({ isOpen, onClose, student, month, year, onSuccess }: Paym
 
   useEffect(() => {
     if (student) {
-      const day = new Date().getDate().toString().padStart(2, '0');
-      const monthStr = month.toString().padStart(2, '0');
-      const dateStr = `${day}-${monthStr}-${year}`;
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
 
       setFormData({
         amount: student.monthlyFee?.toString() || '',
@@ -441,13 +423,15 @@ function PaymentModal({ isOpen, onClose, student, month, year, onSuccess }: Paym
     setLoading(true);
 
     try {
+      const isoDate = new Date(formData.paymentDate).toISOString();
+
       await api.fees.create({
         userid: student.id,
         name: student.name,
         phone: student.phone,
         amount: Number(formData.amount),
         paidType: formData.paidType,
-        date: formData.paymentDate,
+        date: isoDate,
         remarks: formData.remarks,
       });
 
@@ -510,13 +494,12 @@ function PaymentModal({ isOpen, onClose, student, month, year, onSuccess }: Paym
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Payment Date (DD-MM-YYYY) *
+            Payment Date *
           </label>
           <input
-            type="text"
+            type="date"
             value={formData.paymentDate}
             onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
-            placeholder="08-11-2025"
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
             required
           />
@@ -581,16 +564,6 @@ function StudentLedgerModal({ isOpen, onClose, student, feeRecords, onDelete }: 
   const parseDate = (dateStr: string | Date) => {
     try {
       if (dateStr instanceof Date) return dateStr;
-      if (typeof dateStr === 'string' && (dateStr.includes('T') || dateStr.includes('Z'))) {
-        return new Date(dateStr);
-      }
-      const parts = dateStr.split('-');
-      if (parts.length === 3 && parts[0].length === 4) {
-        return new Date(dateStr);
-      } else if (parts.length === 3) {
-        const [day, month, year] = parts.map(Number);
-        return new Date(year, month - 1, day);
-      }
       return new Date(dateStr);
     } catch {
       return new Date();
