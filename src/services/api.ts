@@ -1,4 +1,4 @@
-import { User, Batch, Content, Attendance, YoyoTestResult, Analytics } from '../types';
+import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord } from '../types';
 
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxcGtEsqgOBrBCCCxQqZYIFBYcJnCCth0U2CbTl1b3vvdhdKuS6tP3JtpKGh962cIOA/exec';
 
@@ -288,6 +288,76 @@ export const api = {
   analytics: {
     getOverview: async (): Promise<Analytics> => {
       const response = await fetch(`${API_BASE_URL}?action=getAnalyticsOverview`, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+  },
+
+  fees: {
+    list: async (): Promise<FeeRecord[]> => {
+      const response = await fetch(`${API_BASE_URL}?action=listFees`, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    get: async (id: string): Promise<FeeRecord> => {
+      const response = await fetch(`${API_BASE_URL}?action=getFee&id=${id}`, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    listByUser: async (userid: string): Promise<FeeRecord[]> => {
+      const response = await fetch(`${API_BASE_URL}?action=listFeesByUser&userid=${userid}`, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    filterByDate: async (startDate: string, endDate?: string): Promise<FeeRecord[]> => {
+      let url = `${API_BASE_URL}?action=filterFeesByDate&startDate=${startDate}`;
+      if (endDate) {
+        url += `&endDate=${endDate}`;
+      }
+      const response = await fetch(url, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    create: async (feeData: Partial<FeeRecord>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'createFee', ...feeData }),
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    update: async (feeData: Partial<FeeRecord>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'updateFee', ...feeData }),
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    delete: async (id: string) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'deleteFee', id }),
         redirect: 'follow',
       });
       return handleResponse(response);

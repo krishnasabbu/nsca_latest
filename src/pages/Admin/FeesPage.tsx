@@ -1,24 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/UI/Card';
 import { Modal } from '../../components/UI/Modal';
-import { DollarSign, CheckCircle, XCircle, Clock, Plus, Eye, Filter, Calendar } from 'lucide-react';
+import { DollarSign, CheckCircle, XCircle, Clock, Plus, Eye, Filter, Trash2 } from 'lucide-react';
 import { api } from '../../services/api';
-import { User } from '../../types';
-
-interface FeeLedger {
-  id: string;
-  studentId: string;
-  month: number;
-  year: number;
-  expectedAmount: number;
-  paidAmount: number;
-  balance: number;
-  dueDate: string;
-  paidDate?: string;
-  status: 'paid' | 'partial' | 'pending' | 'overdue';
-  paymentMethod?: string;
-  remarks?: string;
-}
+import { User, FeeRecord } from '../../types';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -27,7 +12,7 @@ const MONTHS = [
 
 export function FeesPage() {
   const [students, setStudents] = useState<User[]>([]);
-  const [feeLedger, setFeeLedger] = useState<FeeLedger[]>([]);
+  const [feeRecords, setFeeRecords] = useState<FeeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -43,9 +28,13 @@ export function FeesPage() {
 
   const loadData = async () => {
     try {
-      const users = await api.users.list();
+      const [users, fees] = await Promise.all([
+        api.users.list(),
+        api.fees.list(),
+      ]);
       const studentsList = users.filter((u) => u.role === 'student');
       setStudents(studentsList);
+      setFeeRecords(fees);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -53,23 +42,77 @@ export function FeesPage() {
     }
   };
 
-  const getCurrentMonthFees = () => {
-    const monthlyCollection = students.reduce((sum, student) => {
-      return sum + (student.monthlyFee || 0);
-    }, 0);
-    return monthlyCollection;
+  const parseDate = (dateStr: string) => {
+    try {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const [day, month, year] = parts.map(Number);
+        return new Date(year, month - 1, day);
+      }
+      return new Date(dateStr);
+    } catch {
+      return new Date();
+    }
   };
 
-  const stats = {
-    totalExpected: getCurrentMonthFees(),
-    totalCollected: Math.floor(getCurrentMonthFees() * 0.75),
-    totalPending: Math.ceil(getCurrentMonthFees() * 0.25),
+  const getMonthYearFees = () => {
+    return feeRecords.filter((fee) => {
+      const feeDate = parseDate(fee.date);
+      return feeDate.getMonth() + 1 === selectedMonth && feeDate.getFullYear() === selectedYear;
+    });
+  };
+
+  const calculateStats = () => {
+    const monthFees = getMonthYearFees();
+    const totalCollected = monthFees.reduce((sum, fee) => sum + Number(fee.amount), 0);
+    const totalExpected = students.reduce((sum, student) => sum + (student.monthlyFee || 0), 0);
+    const totalPending = totalExpected - totalCollected;
+
+    return {
+      totalExpected,
+      totalCollected,
+      totalPending: totalPending > 0 ? totalPending : 0,
+    };
+  };
+
+  const stats = calculateStats();
+
+  const getStudentPaymentStatus = (student: User) => {
+    const monthFees = feeRecords.filter((fee) => {
+      const feeDate = parseDate(fee.date);
+      return (
+        fee.userid === student.id &&
+        feeDate.getMonth() + 1 === selectedMonth &&
+        feeDate.getFullYear() === selectedYear
+      );
+    });
+
+    const totalPaid = monthFees.reduce((sum, fee) => sum + Number(fee.amount), 0);
+    const expectedAmount = student.monthlyFee || 0;
+
+    if (totalPaid >= expectedAmount) {
+      return { status: 'paid', amount: totalPaid };
+    } else if (totalPaid > 0) {
+      return { status: 'partial', amount: totalPaid };
+    } else {
+      return { status: 'pending', amount: 0 };
+    }
   };
 
   const filteredStudents = students.filter((student) => {
-    const matchesSearch = student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.phone?.includes(searchTerm);
-    return matchesSearch;
+    const matchesSearch =
+      student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.phone?.includes(searchTerm);
+
+    if (!matchesSearch) return false;
+
+    if (filterStatus === 'all') return true;
+
+    const paymentStatus = getStudentPaymentStatus(student);
+    if (filterStatus === 'paid') return paymentStatus.status === 'paid';
+    if (filterStatus === 'pending') return paymentStatus.status === 'pending' || paymentStatus.status === 'partial';
+
+    return true;
   });
 
   if (loading) {
@@ -85,7 +128,9 @@ export function FeesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Fee Management</h1>
-          <p className="text-gray-600 dark:text-gray-400">Comprehensive fee ledger and collection tracking</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Comprehensive fee ledger with real-time collection tracking
+          </p>
         </div>
       </div>
 
@@ -96,8 +141,12 @@ export function FeesPage() {
               <DollarSign className="h-8 w-8 text-blue-500" />
             </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Expected (Monthly)</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{stats.totalExpected.toLocaleString()}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                Expected ({MONTHS[selectedMonth - 1]})
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                ₹{stats.totalExpected.toLocaleString()}
+              </p>
             </div>
           </CardBody>
         </Card>
@@ -108,8 +157,12 @@ export function FeesPage() {
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Collected This Month</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{stats.totalCollected.toLocaleString()}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                Collected ({MONTHS[selectedMonth - 1]})
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                ₹{stats.totalCollected.toLocaleString()}
+              </p>
             </div>
           </CardBody>
         </Card>
@@ -120,8 +173,12 @@ export function FeesPage() {
               <XCircle className="h-8 w-8 text-red-500" />
             </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Pending This Month</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{stats.totalPending.toLocaleString()}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                Pending ({MONTHS[selectedMonth - 1]})
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                ₹{stats.totalPending.toLocaleString()}
+              </p>
             </div>
           </CardBody>
         </Card>
@@ -137,7 +194,9 @@ export function FeesPage() {
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
               >
                 {MONTHS.map((month, idx) => (
-                  <option key={idx} value={idx + 1}>{month}</option>
+                  <option key={idx} value={idx + 1}>
+                    {month}
+                  </option>
                 ))}
               </select>
 
@@ -147,7 +206,9 @@ export function FeesPage() {
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
               >
                 {[2024, 2025, 2026].map((year) => (
-                  <option key={year} value={year}>{year}</option>
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
                 ))}
               </select>
             </div>
@@ -205,15 +266,19 @@ export function FeesPage() {
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Student</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Phone</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Batch</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Monthly Fee</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Expected</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Paid</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Balance</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Status</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-white">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredStudents.map((student, idx) => {
-                  const isPaid = idx % 4 !== 0;
+                {filteredStudents.map((student) => {
+                  const paymentStatus = getStudentPaymentStatus(student);
+                  const expectedAmount = student.monthlyFee || 0;
+                  const balance = expectedAmount - paymentStatus.amount;
+
                   return (
                     <tr
                       key={student.id}
@@ -228,20 +293,37 @@ export function FeesPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{student.phone}</td>
-                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{student.batch || '-'}</td>
                       <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">
-                        ₹{student.monthlyFee?.toLocaleString() || '0'}
+                        ₹{expectedAmount.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-green-600">
+                        ₹{paymentStatus.amount.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-red-600">
+                        ₹{balance > 0 ? balance.toLocaleString() : '0'}
                       </td>
                       <td className="py-3 px-4">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 w-fit ${
-                            isPaid
+                            paymentStatus.status === 'paid'
                               ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : paymentStatus.status === 'partial'
+                              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                               : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                           }`}
                         >
-                          {isPaid ? <CheckCircle size={14} /> : <Clock size={14} />}
-                          <span>{isPaid ? 'Paid' : 'Pending'}</span>
+                          {paymentStatus.status === 'paid' ? (
+                            <CheckCircle size={14} />
+                          ) : (
+                            <Clock size={14} />
+                          )}
+                          <span>
+                            {paymentStatus.status === 'paid'
+                              ? 'Paid'
+                              : paymentStatus.status === 'partial'
+                              ? 'Partial'
+                              : 'Pending'}
+                          </span>
                         </span>
                       </td>
                       <td className="py-3 px-4">
@@ -290,6 +372,8 @@ export function FeesPage() {
         isOpen={isLedgerModalOpen}
         onClose={() => setIsLedgerModalOpen(false)}
         student={selectedStudent}
+        feeRecords={feeRecords}
+        onDelete={loadData}
       />
     </div>
   );
@@ -307,38 +391,60 @@ interface PaymentModalProps {
 function PaymentModal({ isOpen, onClose, student, month, year, onSuccess }: PaymentModalProps) {
   const [formData, setFormData] = useState({
     amount: '',
-    paymentDate: new Date().toISOString().split('T')[0],
-    paymentMethod: 'cash',
+    paymentDate: '',
+    paidType: 'cash' as 'cash' | 'upi' | 'bank_transfer' | 'cheque',
     remarks: '',
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (student) {
+      const day = new Date().getDate().toString().padStart(2, '0');
+      const monthStr = month.toString().padStart(2, '0');
+      const dateStr = `${day}-${monthStr}-${year}`;
+
       setFormData({
         amount: student.monthlyFee?.toString() || '',
-        paymentDate: new Date().toISOString().split('T')[0],
-        paymentMethod: 'cash',
+        paymentDate: dateStr,
+        paidType: 'cash',
         remarks: '',
       });
     }
-  }, [student]);
+  }, [student, month, year]);
 
   if (!student) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Payment recorded successfully!');
-    onSuccess();
-    onClose();
+    setLoading(true);
+
+    try {
+      await api.fees.create({
+        userid: student.id,
+        name: student.name,
+        phone: student.phone,
+        amount: Number(formData.amount),
+        paidType: formData.paidType,
+        date: formData.paymentDate,
+        remarks: formData.remarks,
+      });
+
+      alert('Payment recorded successfully!');
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error('Failed to record payment:', error);
+      alert('Failed to record payment. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Record Payment">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Student
-          </label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Student</label>
           <input
             type="text"
             value={student.name}
@@ -349,9 +455,7 @@ function PaymentModal({ isOpen, onClose, student, month, year, onSuccess }: Paym
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Month
-            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Month</label>
             <input
               type="text"
               value={MONTHS[month - 1]}
@@ -361,9 +465,7 @@ function PaymentModal({ isOpen, onClose, student, month, year, onSuccess }: Paym
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Year
-            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Year</label>
             <input
               type="text"
               value={year}
@@ -374,9 +476,7 @@ function PaymentModal({ isOpen, onClose, student, month, year, onSuccess }: Paym
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Amount (₹) *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount (₹) *</label>
           <input
             type="number"
             value={formData.amount}
@@ -388,24 +488,23 @@ function PaymentModal({ isOpen, onClose, student, month, year, onSuccess }: Paym
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Payment Date *
+            Payment Date (DD-MM-YYYY) *
           </label>
           <input
-            type="date"
+            type="text"
             value={formData.paymentDate}
             onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
+            placeholder="08-11-2025"
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Payment Method *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method *</label>
           <select
-            value={formData.paymentMethod}
-            onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+            value={formData.paidType}
+            onChange={(e) => setFormData({ ...formData, paidType: e.target.value as any })}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
           >
             <option value="cash">Cash</option>
@@ -416,9 +515,7 @@ function PaymentModal({ isOpen, onClose, student, month, year, onSuccess }: Paym
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Remarks
-          </label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Remarks</label>
           <textarea
             value={formData.remarks}
             onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
@@ -437,9 +534,10 @@ function PaymentModal({ isOpen, onClose, student, month, year, onSuccess }: Paym
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-gradient-to-r from-green-600 to-yellow-500 text-white rounded-lg hover:from-green-700 hover:to-yellow-600 transition-all"
+            disabled={loading}
+            className="px-6 py-2 bg-gradient-to-r from-green-600 to-yellow-500 text-white rounded-lg hover:from-green-700 hover:to-yellow-600 transition-all disabled:opacity-50"
           >
-            Record Payment
+            {loading ? 'Recording...' : 'Record Payment'}
           </button>
         </div>
       </form>
@@ -451,16 +549,35 @@ interface StudentLedgerModalProps {
   isOpen: boolean;
   onClose: () => void;
   student: User | null;
+  feeRecords: FeeRecord[];
+  onDelete: () => void;
 }
 
-function StudentLedgerModal({ isOpen, onClose, student }: StudentLedgerModalProps) {
+function StudentLedgerModal({ isOpen, onClose, student, feeRecords, onDelete }: StudentLedgerModalProps) {
   if (!student) return null;
 
-  const mockLedger = [
-    { month: 'November 2025', expected: student.monthlyFee || 0, paid: student.monthlyFee || 0, balance: 0, status: 'paid', date: '2025-11-05' },
-    { month: 'October 2025', expected: student.monthlyFee || 0, paid: student.monthlyFee || 0, balance: 0, status: 'paid', date: '2025-10-03' },
-    { month: 'September 2025', expected: student.monthlyFee || 0, paid: 0, balance: student.monthlyFee || 0, status: 'pending', date: '-' },
-  ];
+  const studentFees = feeRecords
+    .filter((fee) => fee.userid === student.id)
+    .sort((a, b) => {
+      const dateA = new Date(a.date.split('-').reverse().join('-'));
+      const dateB = new Date(b.date.split('-').reverse().join('-'));
+      return dateB.getTime() - dateA.getTime();
+    });
+
+  const totalPaid = studentFees.reduce((sum, fee) => sum + Number(fee.amount), 0);
+
+  const handleDelete = async (feeId: string) => {
+    if (!confirm('Are you sure you want to delete this payment record?')) return;
+
+    try {
+      await api.fees.delete(feeId);
+      alert('Payment record deleted successfully!');
+      onDelete();
+    } catch (error) {
+      console.error('Failed to delete fee record:', error);
+      alert('Failed to delete payment record.');
+    }
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Fee Ledger - ${student.name}`} size="lg">
@@ -468,54 +585,62 @@ function StudentLedgerModal({ isOpen, onClose, student }: StudentLedgerModalProp
         <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <div>
             <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Fee</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">₹{student.monthlyFee?.toLocaleString() || '0'}</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">
+              ₹{student.monthlyFee?.toLocaleString() || '0'}
+            </p>
           </div>
           <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Total Paid</p>
-            <p className="text-xl font-bold text-green-600">₹{((student.monthlyFee || 0) * 2).toLocaleString()}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Total Payments</p>
+            <p className="text-xl font-bold text-green-600">₹{totalPaid.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Total Pending</p>
-            <p className="text-xl font-bold text-red-600">₹{(student.monthlyFee || 0).toLocaleString()}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Payment Count</p>
+            <p className="text-xl font-bold text-blue-600">{studentFees.length}</p>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Month</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Expected</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Paid</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Balance</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Status</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockLedger.map((entry, idx) => (
-                <tr key={idx} className="border-b border-gray-100 dark:border-gray-800">
-                  <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{entry.month}</td>
-                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400">₹{entry.expected.toLocaleString()}</td>
-                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400">₹{entry.paid.toLocaleString()}</td>
-                  <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">₹{entry.balance.toLocaleString()}</td>
-                  <td className="py-3 px-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        entry.status === 'paid'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                      }`}
-                    >
-                      {entry.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{entry.date}</td>
+        {studentFees.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            No payment records found for this student.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Date</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Amount</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Method</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Remarks</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-white">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {studentFees.map((fee) => (
+                  <tr key={fee.id} className="border-b border-gray-100 dark:border-gray-800">
+                    <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{fee.date}</td>
+                    <td className="py-3 px-4 font-semibold text-green-600">₹{Number(fee.amount).toLocaleString()}</td>
+                    <td className="py-3 px-4 text-gray-600 dark:text-gray-400 capitalize">
+                      {fee.paidType.replace('_', ' ')}
+                    </td>
+                    <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{fee.remarks || '-'}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-end">
+                        <button
+                          onClick={() => handleDelete(fee.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Delete Record"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </Modal>
   );

@@ -101,6 +101,17 @@ export interface Payment {
   remarks?: string;
 }
 
+export interface FeeRecord {
+  id: string;
+  userid: string;
+  name: string;
+  phone: string;
+  amount: number;
+  paidType: 'cash' | 'upi' | 'bank_transfer' | 'cheque';
+  date: string;
+  remarks?: string;
+}
+
 export interface Analytics {
   totalRevenue: number;
   activeStudents: number;
