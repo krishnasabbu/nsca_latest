@@ -60,13 +60,12 @@ export function Sidebar() {
       </button>
 
       <aside className={`fixed left-0 top-0 h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all z-40 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-green-50 to-yellow-50 dark:from-gray-900 dark:to-gray-900">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-center">
           <img
-            src="/WhatsApp Image 2025-11-11 at 5.32.58 PM.jpeg"
+            src="/WhatsApp_Image_2025-11-11_at_5.32.58_PM-removebg-preview.png"
             alt="Nature Space Cricket Academy"
-            className="w-full h-auto max-w-[200px] mix-blend-multiply dark:mix-blend-normal dark:brightness-110"
-            style={{ imageRendering: 'crisp-edges' }}
+            className="w-full h-auto max-w-[200px]"
           />
         </div>
       </div>
