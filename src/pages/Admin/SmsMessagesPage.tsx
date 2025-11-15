@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { api } from '../../services/api';
 import { SmsMessage } from '../../types';
 import { Card } from '../../components/UI/Card';
@@ -6,22 +6,18 @@ import { MessageSquare, Search, Filter, Download, Calendar, DollarSign, User } f
 
 export function SmsMessagesPage() {
   const [messages, setMessages] = useState<SmsMessage[]>([]);
-  const [filteredMessages, setFilteredMessages] = useState<SmsMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterSender, setFilterSender] = useState<string>('all');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [dateRangeStart, setDateRangeStart] = useState('');
+  const [dateRangeEnd, setDateRangeEnd] = useState('');
   const [senders, setSenders] = useState<string[]>([]);
   const [transactionTypes, setTransactionTypes] = useState<string[]>([]);
 
   useEffect(() => {
     loadMessages();
   }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [messages, searchTerm, filterType, filterSender, dateRange]);
 
   const loadMessages = async () => {
     try {
@@ -62,7 +58,7 @@ export function SmsMessagesPage() {
     return isNaN(date.getTime()) ? null : date;
   };
 
-  const applyFilters = () => {
+  const filteredMessages = useMemo(() => {
     let filtered = [...messages];
 
     if (searchTerm) {
@@ -83,18 +79,18 @@ export function SmsMessagesPage() {
       filtered = filtered.filter(msg => msg.senderAddress === filterSender);
     }
 
-    if (dateRange.start) {
+    if (dateRangeStart) {
       filtered = filtered.filter(msg => {
         const msgDate = parseCustomDate(msg.smsDate);
-        const startDate = new Date(dateRange.start);
+        const startDate = new Date(dateRangeStart);
         return msgDate && msgDate >= startDate;
       });
     }
 
-    if (dateRange.end) {
+    if (dateRangeEnd) {
       filtered = filtered.filter(msg => {
         const msgDate = parseCustomDate(msg.smsDate);
-        const endDate = new Date(dateRange.end);
+        const endDate = new Date(dateRangeEnd);
         endDate.setHours(23, 59, 59, 999);
         return msgDate && msgDate <= endDate;
       });
@@ -107,14 +103,15 @@ export function SmsMessagesPage() {
       return dateA.getTime() - dateB.getTime();
     });
 
-    setFilteredMessages(filtered);
-  };
+    return filtered;
+  }, [messages, searchTerm, filterType, filterSender, dateRangeStart, dateRangeEnd]);
 
   const clearFilters = () => {
     setSearchTerm('');
     setFilterType('all');
     setFilterSender('all');
-    setDateRange({ start: '', end: '' });
+    setDateRangeStart('');
+    setDateRangeEnd('');
   };
 
   const exportToCSV = () => {
@@ -298,8 +295,8 @@ export function SmsMessagesPage() {
               </label>
               <input
                 type="date"
-                value={dateRange.start}
-                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                value={dateRangeStart}
+                onChange={(e) => setDateRangeStart(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -310,8 +307,8 @@ export function SmsMessagesPage() {
               </label>
               <input
                 type="date"
-                value={dateRange.end}
-                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                value={dateRangeEnd}
+                onChange={(e) => setDateRangeEnd(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
               />
             </div>
