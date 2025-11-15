@@ -41,6 +41,21 @@ export function SmsMessagesPage() {
     }
   };
 
+  const parseCustomDate = (dateString: string): Date | null => {
+    if (!dateString) return null;
+
+    const parts = dateString.match(/(\d{2})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+    if (!parts) {
+      const fallbackDate = new Date(dateString);
+      return isNaN(fallbackDate.getTime()) ? null : fallbackDate;
+    }
+
+    const [, day, month, year, hour, minute, second] = parts;
+    const fullYear = parseInt(year, 10) + 2000;
+
+    return new Date(fullYear, parseInt(month, 10) - 1, parseInt(day, 10), parseInt(hour, 10), parseInt(minute, 10), parseInt(second, 10));
+  };
+
   const applyFilters = () => {
     let filtered = [...messages];
 
@@ -64,21 +79,27 @@ export function SmsMessagesPage() {
 
     if (dateRange.start) {
       filtered = filtered.filter(msg => {
-        const msgDate = new Date(msg.smsDate);
+        const msgDate = parseCustomDate(msg.smsDate);
         const startDate = new Date(dateRange.start);
-        return msgDate >= startDate;
+        return msgDate && msgDate >= startDate;
       });
     }
 
     if (dateRange.end) {
       filtered = filtered.filter(msg => {
-        const msgDate = new Date(msg.smsDate);
+        const msgDate = parseCustomDate(msg.smsDate);
         const endDate = new Date(dateRange.end);
-        return msgDate <= endDate;
+        endDate.setHours(23, 59, 59, 999);
+        return msgDate && msgDate <= endDate;
       });
     }
 
-    filtered.sort((a, b) => new Date(b.smsDate).getTime() - new Date(a.smsDate).getTime());
+    filtered.sort((a, b) => {
+      const dateA = parseCustomDate(b.smsDate);
+      const dateB = parseCustomDate(a.smsDate);
+      if (!dateA || !dateB) return 0;
+      return dateA.getTime() - dateB.getTime();
+    });
 
     setFilteredMessages(filtered);
   };
@@ -124,7 +145,11 @@ export function SmsMessagesPage() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString('en-IN', {
+
+    const date = parseCustomDate(dateString);
+    if (!date) return 'Invalid Date';
+
+    return date.toLocaleString('en-IN', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
