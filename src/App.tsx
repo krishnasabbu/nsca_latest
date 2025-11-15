@@ -11,6 +11,7 @@ import { YoyoTestPage } from './pages/Admin/YoyoTestPage';
 import { AttendancePage } from './pages/Admin/AttendancePage';
 import { FeesPage } from './pages/Admin/FeesPage';
 import { SalaryPage } from './pages/Admin/SalaryPage';
+import { SmsMessagesPage } from './pages/Admin/SmsMessagesPage';
 import { CoachDashboard } from './pages/Coach/CoachDashboard';
 import { CoachPlayersPage } from './pages/Coach/CoachPlayersPage';
 
@@ -61,6 +62,7 @@ function App() {
           <Route path="attendance" element={<AttendancePage />} />
           <Route path="fees" element={<FeesPage />} />
           <Route path="salary" element={<SalaryPage />} />
+          <Route path="sms-messages" element={<SmsMessagesPage />} />
         </Route>
 
         <Route

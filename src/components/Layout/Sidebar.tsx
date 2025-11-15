@@ -12,6 +12,7 @@ import {
   DollarSign,
   Wallet,
   LogOut,
+  MessageSquare,
 } from 'lucide-react';
 
 interface NavItem {
@@ -31,6 +32,7 @@ const adminNavItems: NavItem[] = [
   { to: '/admin/attendance', icon: <ClipboardCheck size={20} />, label: 'Attendance', roles: ['admin'] },
   { to: '/admin/fees', icon: <DollarSign size={20} />, label: 'Fee Management', roles: ['admin'] },
   { to: '/admin/salary', icon: <Wallet size={20} />, label: 'Salary', roles: ['admin'] },
+  { to: '/admin/sms-messages', icon: <MessageSquare size={20} />, label: 'SMS Messages', roles: ['admin'] },
 ];
 
 const coachNavItems: NavItem[] = [

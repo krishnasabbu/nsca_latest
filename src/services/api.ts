@@ -1,4 +1,4 @@
-import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord } from '../types';
+import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord, SmsMessage } from '../types';
 import { cacheManager } from './cache';
 
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxcGtEsqgOBrBCCCxQqZYIFBYcJnCCth0U2CbTl1b3vvdhdKuS6tP3JtpKGh962cIOA/exec';
@@ -497,6 +497,72 @@ export const api = {
       });
       const result = await handleResponse(response);
       await cacheManager.remove('cache', 'fees_list');
+      return result;
+    },
+  },
+
+  smsMessages: {
+    list: async (forceSync: boolean = false): Promise<SmsMessage[]> => {
+      return fetchWithCache(
+        'sms_messages_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listSmsMessages`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('smsMessages');
+          return data;
+        },
+        !forceSync
+      );
+    },
+
+    get: async (id: string): Promise<SmsMessage> => {
+      const response = await fetch(`${API_BASE_URL}?action=getSmsMessage&id=${id}`, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    create: async (smsData: Partial<SmsMessage>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'createSmsMessage', ...smsData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'sms_messages_list');
+      return result;
+    },
+
+    update: async (smsData: Partial<SmsMessage>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'updateSmsMessage', ...smsData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'sms_messages_list');
+      return result;
+    },
+
+    delete: async (id: string) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'deleteSmsMessage', id }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'sms_messages_list');
       return result;
     },
   },

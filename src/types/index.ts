@@ -114,3 +114,17 @@ export interface Analytics {
   sessionsThisMonth: number;
   growthRate: number;
 }
+
+export interface SmsMessage {
+  id: string;
+  smsDate: string;
+  senderAddress: string;
+  transactionType: string;
+  amount: number;
+  upiId: string;
+  transactionId: string;
+  partyName: string;
+  fullMessage: string;
+  createdAt: string;
+  updatedAt: string;
+}
