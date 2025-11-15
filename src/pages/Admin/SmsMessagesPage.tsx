@@ -149,12 +149,10 @@ export function SmsMessagesPage() {
     const date = parseCustomDate(dateString);
     if (!date) return 'Invalid Date';
 
-    return date.toLocaleString('en-IN', {
+    return date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: 'numeric'
     });
   };
 
