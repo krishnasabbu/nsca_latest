@@ -44,16 +44,22 @@ export function SmsMessagesPage() {
   const parseCustomDate = (dateString: string): Date | null => {
     if (!dateString) return null;
 
-    const parts = dateString.match(/(\d{2})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+    const parts = dateString.match(/(\d{1,2})-(\d{1,2})-(\d{2})\s+(\d{1,2}):(\d{2}):(\d{2})/);
     if (!parts) {
       const fallbackDate = new Date(dateString);
       return isNaN(fallbackDate.getTime()) ? null : fallbackDate;
     }
 
-    const [, day, month, year, hour, minute, second] = parts;
-    const fullYear = parseInt(year, 10) + 2000;
+    const day = parseInt(parts[1], 10);
+    const month = parseInt(parts[2], 10);
+    const year = parseInt(parts[3], 10) + 2000;
+    const hour = parseInt(parts[4], 10);
+    const minute = parseInt(parts[5], 10);
+    const second = parseInt(parts[6], 10);
 
-    return new Date(fullYear, parseInt(month, 10) - 1, parseInt(day, 10), parseInt(hour, 10), parseInt(minute, 10), parseInt(second, 10));
+    const date = new Date(year, month - 1, day, hour, minute, second);
+
+    return isNaN(date.getTime()) ? null : date;
   };
 
   const applyFilters = () => {
