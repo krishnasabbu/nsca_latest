@@ -2,11 +2,12 @@ import { useState, useEffect, useMemo } from 'react';
 import { api } from '../../services/api';
 import { SmsMessage } from '../../types';
 import { Card } from '../../components/UI/Card';
-import { MessageSquare, Search, Filter, Download, Calendar, DollarSign, User } from 'lucide-react';
+import { MessageSquare, Search, Filter, Download, Calendar, DollarSign, User, RefreshCw } from 'lucide-react';
 
 export function SmsMessagesPage() {
   const [messages, setMessages] = useState<SmsMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterSender, setFilterSender] = useState<string>('all');
@@ -19,10 +20,14 @@ export function SmsMessagesPage() {
     loadMessages();
   }, []);
 
-  const loadMessages = async () => {
+  const loadMessages = async (forceSync: boolean = false) => {
     try {
-      setLoading(true);
-      const data = await api.smsMessages.list();
+      if (forceSync) {
+        setSyncing(true);
+      } else {
+        setLoading(true);
+      }
+      const data = await api.smsMessages.list(forceSync);
       setMessages(data);
 
       const uniqueSenders = [...new Set(data.map(m => m.senderAddress).filter(Boolean))];
@@ -34,7 +39,12 @@ export function SmsMessagesPage() {
       console.error('Failed to load SMS messages:', error);
     } finally {
       setLoading(false);
+      setSyncing(false);
     }
+  };
+
+  const handleSync = async () => {
+    await loadMessages(true);
   };
 
   const parseCustomDate = (dateString: string): Date | null => {
@@ -186,13 +196,23 @@ export function SmsMessagesPage() {
             View and manage transaction SMS messages
           </p>
         </div>
-        <button
-          onClick={exportToCSV}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-        >
-          <Download size={20} />
-          Export CSV
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
+            {syncing ? 'Syncing...' : 'Sync'}
+          </button>
+          <button
+            onClick={exportToCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Download size={20} />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
