@@ -174,7 +174,10 @@ export function SmsMessagesPage() {
     return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   };
 
-  const totalAmount = filteredMessages.reduce((sum, msg) => sum + (msg.amount || 0), 0);
+  const totalAmount = filteredMessages.reduce((sum, msg) => {
+    const amount = typeof msg.amount === 'string' ? parseFloat(msg.amount) : msg.amount;
+    return sum + (amount || 0);
+  }, 0);
 
   if (loading) {
     return (
