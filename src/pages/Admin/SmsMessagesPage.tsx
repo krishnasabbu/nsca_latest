@@ -169,15 +169,20 @@ export function SmsMessagesPage() {
     });
   };
 
-  const formatAmount = (amount: number) => {
-    if (!amount) return 'N/A';
-    return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  const formatAmount = (amount: number | string | null | undefined) => {
+    if (amount === null || amount === undefined || amount === '') return 'N/A';
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(numAmount) || numAmount === 0) return 'N/A';
+    return `₹${numAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   };
 
-  const totalAmount = filteredMessages.reduce((sum, msg) => {
-    const amount = typeof msg.amount === 'string' ? parseFloat(msg.amount) : msg.amount;
-    return sum + (amount || 0);
-  }, 0);
+  const totalAmount = useMemo(() => {
+    return filteredMessages.reduce((sum, msg) => {
+      const amount = typeof msg.amount === 'string' ? parseFloat(msg.amount) : msg.amount;
+      const numAmount = !isNaN(amount) && amount !== null ? Number(amount) : 0;
+      return sum + numAmount;
+    }, 0);
+  }, [filteredMessages]);
 
   if (loading) {
     return (
