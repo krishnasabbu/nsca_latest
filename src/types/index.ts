@@ -128,3 +128,20 @@ export interface SmsMessage {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Work {
+  id: string;
+  date: string;
+  workCategory: string;
+  workDetails: string;
+  paidBy: string;
+  amount: number;
+  modeOfTransaction: string;
+}
+
+export interface Investment {
+  id: string;
+  date: string;
+  name: string;
+  amount: number;
+}

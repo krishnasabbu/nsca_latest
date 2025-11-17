@@ -1,4 +1,4 @@
-import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord, SmsMessage } from '../types';
+import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord, SmsMessage, Work, Investment } from '../types';
 import { cacheManager } from './cache';
 
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxcGtEsqgOBrBCCCxQqZYIFBYcJnCCth0U2CbTl1b3vvdhdKuS6tP3JtpKGh962cIOA/exec';
@@ -533,6 +533,138 @@ export const api = {
         redirect: 'follow',
       });
       return handleResponse(response);
+    },
+  },
+
+  works: {
+    list: async (forceSync: boolean = false): Promise<Work[]> => {
+      return fetchWithCache(
+        'works_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listWorks`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('works');
+          return data;
+        },
+        !forceSync
+      );
+    },
+
+    get: async (id: string): Promise<Work> => {
+      const response = await fetch(`${API_BASE_URL}?action=getWork&id=${id}`, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    create: async (workData: Partial<Work>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'createWork', ...workData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'works_list');
+      return result;
+    },
+
+    upsert: async (workData: Partial<Work>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'upsertWork', ...workData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'works_list');
+      return result;
+    },
+
+    delete: async (id: string) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'deleteWork', id }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'works_list');
+      return result;
+    },
+  },
+
+  investments: {
+    list: async (forceSync: boolean = false): Promise<Investment[]> => {
+      return fetchWithCache(
+        'investments_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listInvestments`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('investments');
+          return data;
+        },
+        !forceSync
+      );
+    },
+
+    get: async (id: string): Promise<Investment> => {
+      const response = await fetch(`${API_BASE_URL}?action=getInvestment&id=${id}`, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    create: async (investmentData: Partial<Investment>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'createInvestment', ...investmentData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'investments_list');
+      return result;
+    },
+
+    upsert: async (investmentData: Partial<Investment>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'upsertInvestment', ...investmentData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'investments_list');
+      return result;
+    },
+
+    delete: async (id: string) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'deleteInvestment', id }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'investments_list');
+      return result;
     },
   },
 };

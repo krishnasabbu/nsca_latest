@@ -13,6 +13,8 @@ import {
   Wallet,
   LogOut,
   MessageSquare,
+  Briefcase,
+  TrendingUp,
 } from 'lucide-react';
 
 interface NavItem {
@@ -33,6 +35,8 @@ const adminNavItems: NavItem[] = [
   { to: '/admin/fees', icon: <DollarSign size={20} />, label: 'Fee Management', roles: ['admin'] },
   { to: '/admin/salary', icon: <Wallet size={20} />, label: 'Salary', roles: ['admin'] },
   { to: '/admin/sms-messages', icon: <MessageSquare size={20} />, label: 'SMS Messages', roles: ['admin'] },
+  { to: '/admin/expenses', icon: <Briefcase size={20} />, label: 'Expenses', roles: ['admin'] },
+  { to: '/admin/investments', icon: <TrendingUp size={20} />, label: 'Investments', roles: ['admin'] },
 ];
 
 const coachNavItems: NavItem[] = [
