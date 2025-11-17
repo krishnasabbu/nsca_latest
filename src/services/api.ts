@@ -1,7 +1,7 @@
 import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord, SmsMessage, Work, Investment } from '../types';
 import { cacheManager } from './cache';
 
-const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxcGtEsqgOBrBCCCxQqZYIFBYcJnCCth0U2CbTl1b3vvdhdKuS6tP3JtpKGh962cIOA/exec';
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbyQW57SJ8lUQBLUiYrArPWO0pryjWSiBC63DamcSYOdtenAk1aCeYbKXewlDDo7Q-CXxg/exec';
 
 const handleResponse = async (response: Response) => {
   const data = await response.json().catch(() => ({ error: 'Network error' }));
@@ -544,7 +544,16 @@ export const api = {
           const response = await fetch(`${API_BASE_URL}?action=listWorks`, {
             redirect: 'follow',
           });
-          const data = await handleResponse(response);
+          const rawData = await handleResponse(response);
+          const data = Array.isArray(rawData) ? rawData.map((item: any) => ({
+            id: item.id,
+            date: item.Date || item.date,
+            workCategory: item['Work Category'] || item.workCategory,
+            workDetails: item['Work Details'] || item.workDetails,
+            paidBy: item['Paid By'] || item.paidBy,
+            amount: item.Amount || item.amount,
+            modeOfTransaction: item['Mode of Transaction'] || item.modeOfTransaction,
+          })) : [];
           await cacheManager.setLastSyncTime('works');
           return data;
         },
@@ -556,16 +565,34 @@ export const api = {
       const response = await fetch(`${API_BASE_URL}?action=getWork&id=${id}`, {
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const rawData = await handleResponse(response);
+      return {
+        id: rawData.id,
+        date: rawData.Date || rawData.date,
+        workCategory: rawData['Work Category'] || rawData.workCategory,
+        workDetails: rawData['Work Details'] || rawData.workDetails,
+        paidBy: rawData['Paid By'] || rawData.paidBy,
+        amount: rawData.Amount || rawData.amount,
+        modeOfTransaction: rawData['Mode of Transaction'] || rawData.modeOfTransaction,
+      };
     },
 
     create: async (workData: Partial<Work>) => {
+      const payload = {
+        action: 'createWork',
+        date: workData.date,
+        'Work Category': workData.workCategory,
+        'Work Details': workData.workDetails,
+        'Paid By': workData.paidBy,
+        'Amount': workData.amount,
+        'Mode of Transaction': workData.modeOfTransaction,
+      };
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({ action: 'createWork', ...workData }),
+        body: JSON.stringify(payload),
         redirect: 'follow',
       });
       const result = await handleResponse(response);
@@ -574,12 +601,22 @@ export const api = {
     },
 
     upsert: async (workData: Partial<Work>) => {
+      const payload = {
+        action: 'upsertWork',
+        id: workData.id,
+        date: workData.date,
+        'Work Category': workData.workCategory,
+        'Work Details': workData.workDetails,
+        'Paid By': workData.paidBy,
+        'Amount': workData.amount,
+        'Mode of Transaction': workData.modeOfTransaction,
+      };
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({ action: 'upsertWork', ...workData }),
+        body: JSON.stringify(payload),
         redirect: 'follow',
       });
       const result = await handleResponse(response);
@@ -610,7 +647,13 @@ export const api = {
           const response = await fetch(`${API_BASE_URL}?action=listInvestments`, {
             redirect: 'follow',
           });
-          const data = await handleResponse(response);
+          const rawData = await handleResponse(response);
+          const data = Array.isArray(rawData) ? rawData.map((item: any) => ({
+            id: item.id,
+            date: item.Date || item.date,
+            name: item.Name || item.name,
+            amount: item.Amount || item.amount,
+          })) : [];
           await cacheManager.setLastSyncTime('investments');
           return data;
         },
@@ -622,16 +665,28 @@ export const api = {
       const response = await fetch(`${API_BASE_URL}?action=getInvestment&id=${id}`, {
         redirect: 'follow',
       });
-      return handleResponse(response);
+      const rawData = await handleResponse(response);
+      return {
+        id: rawData.id,
+        date: rawData.Date || rawData.date,
+        name: rawData.Name || rawData.name,
+        amount: rawData.Amount || rawData.amount,
+      };
     },
 
     create: async (investmentData: Partial<Investment>) => {
+      const payload = {
+        action: 'createInvestment',
+        date: investmentData.date,
+        'Name': investmentData.name,
+        'Amount': investmentData.amount,
+      };
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({ action: 'createInvestment', ...investmentData }),
+        body: JSON.stringify(payload),
         redirect: 'follow',
       });
       const result = await handleResponse(response);
@@ -640,12 +695,19 @@ export const api = {
     },
 
     upsert: async (investmentData: Partial<Investment>) => {
+      const payload = {
+        action: 'upsertInvestment',
+        id: investmentData.id,
+        date: investmentData.date,
+        'Name': investmentData.name,
+        'Amount': investmentData.amount,
+      };
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({ action: 'upsertInvestment', ...investmentData }),
+        body: JSON.stringify(payload),
         redirect: 'follow',
       });
       const result = await handleResponse(response);
