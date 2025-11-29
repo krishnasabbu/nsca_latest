@@ -267,33 +267,36 @@ export function AttendancePage() {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => markAttendance(player.id, 'present')}
+                        disabled={status === 'present'}
                         className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
                           status === 'present'
-                            ? 'bg-green-500 text-white'
+                            ? 'bg-green-500 text-white cursor-default'
                             : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-500 hover:bg-green-50 dark:hover:bg-green-900/20'
-                        }`}
+                        } ${status && status !== 'present' ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <Check size={18} />
                         <span>Present</span>
                       </button>
                       <button
                         onClick={() => markAttendance(player.id, 'late')}
+                        disabled={status === 'late'}
                         className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
                           status === 'late'
-                            ? 'bg-yellow-500 text-white'
+                            ? 'bg-yellow-500 text-white cursor-default'
                             : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
-                        }`}
+                        } ${status && status !== 'late' ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <Clock size={18} />
                         <span>Late</span>
                       </button>
                       <button
                         onClick={() => markAttendance(player.id, 'absent')}
+                        disabled={status === 'absent'}
                         className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
                           status === 'absent'
-                            ? 'bg-red-500 text-white'
+                            ? 'bg-red-500 text-white cursor-default'
                             : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                        }`}
+                        } ${status && status !== 'absent' ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <X size={18} />
                         <span>Absent</span>
