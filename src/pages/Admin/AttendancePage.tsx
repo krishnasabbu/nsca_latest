@@ -15,6 +15,15 @@ export function AttendancePage() {
   const [bulkStatus, setBulkStatus] = useState<'present' | 'absent' | 'late'>('present');
   const user = useAuthStore((state) => state.user);
 
+  const normalizeDate = (dateString: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -38,7 +47,7 @@ export function AttendancePage() {
 
   const markAttendance = async (playerId: string, status: 'present' | 'absent' | 'late') => {
     try {
-      const existing = attendance.find((a) => a.userId === playerId && a.date === selectedDate);
+      const existing = attendance.find((a) => a.userId === playerId && normalizeDate(a.date) === selectedDate);
       const player = players.find((p) => p.id === playerId);
 
       if (existing) {
@@ -72,7 +81,7 @@ export function AttendancePage() {
       const filteredPlayersList = getFilteredPlayers();
 
       for (const player of filteredPlayersList) {
-        const existing = attendance.find((a) => a.userId === player.id && a.date === selectedDate);
+        const existing = attendance.find((a) => a.userId === player.id && normalizeDate(a.date) === selectedDate);
 
         if (existing) {
           await api.attendance.update({
@@ -103,7 +112,7 @@ export function AttendancePage() {
   };
 
   const getAttendanceStatus = (playerId: string) => {
-    const record = attendance.find((a) => a.userId === playerId && a.date === selectedDate);
+    const record = attendance.find((a) => a.userId === playerId && normalizeDate(a.date) === selectedDate);
     return record?.status;
   };
 
