@@ -1,7 +1,7 @@
 import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord, SmsMessage, Work, Investment, Category, InventoryItem } from '../types';
 import { cacheManager } from './cache';
 
-const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbygiw4C25-aZXKNy50GdUzBU4MHpZOhE2Jz56jUiigvri-D4xd0j3q65wKrvxUh_ll22A/exec';
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbws-3vOds45ba7yDXhz10qYd3ENvrHliFlS-io6Qd5h3C6Bis9b7IaY1EZPSoQDeVrA7Q/exec';
 
 const handleResponse = async (response: Response) => {
   const data = await response.json().catch(() => ({ error: 'Network error' }));
