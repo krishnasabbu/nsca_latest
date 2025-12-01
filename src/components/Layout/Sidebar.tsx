@@ -16,6 +16,7 @@ import {
   Briefcase,
   TrendingUp,
   Package,
+  BookOpen,
 } from 'lucide-react';
 
 interface NavItem {
@@ -39,6 +40,7 @@ const adminNavItems: NavItem[] = [
   { to: '/admin/expenses', icon: <Briefcase size={20} />, label: 'Expenses', roles: ['admin'] },
   { to: '/admin/investments', icon: <TrendingUp size={20} />, label: 'Investments', roles: ['admin'] },
   { to: '/admin/inventory', icon: <Package size={20} />, label: 'Inventory', roles: ['admin'] },
+  { to: '/admin/ledger', icon: <BookOpen size={20} />, label: 'Ledger', roles: ['admin'] },
 ];
 
 const coachNavItems: NavItem[] = [
