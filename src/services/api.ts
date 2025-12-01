@@ -1,4 +1,4 @@
-import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord, SmsMessage, Work, Investment } from '../types';
+import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord, SmsMessage, Work, Investment, Category, InventoryItem } from '../types';
 import { cacheManager } from './cache';
 
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbygiw4C25-aZXKNy50GdUzBU4MHpZOhE2Jz56jUiigvri-D4xd0j3q65wKrvxUh_ll22A/exec';
@@ -726,6 +726,134 @@ export const api = {
       });
       const result = await handleResponse(response);
       await cacheManager.remove('cache', 'investments_list');
+      return result;
+    },
+  },
+
+  categories: {
+    list: async (forceSync: boolean = false): Promise<Category[]> => {
+      return fetchWithCache(
+        'categories_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listCategories`, {
+            redirect: 'follow',
+          });
+          return handleResponse(response);
+        },
+        !forceSync
+      );
+    },
+
+    get: async (id: string): Promise<Category> => {
+      const response = await fetch(`${API_BASE_URL}?action=getCategory&id=${id}`, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    create: async (categoryData: Partial<Category>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'createCategory', ...categoryData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'categories_list');
+      return result;
+    },
+
+    upsert: async (categoryData: Partial<Category>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'upsertCategory', ...categoryData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'categories_list');
+      return result;
+    },
+
+    delete: async (id: string) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'deleteCategory', id }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'categories_list');
+      return result;
+    },
+  },
+
+  items: {
+    list: async (forceSync: boolean = false): Promise<InventoryItem[]> => {
+      return fetchWithCache(
+        'items_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listItems`, {
+            redirect: 'follow',
+          });
+          return handleResponse(response);
+        },
+        !forceSync
+      );
+    },
+
+    get: async (id: string): Promise<InventoryItem> => {
+      const response = await fetch(`${API_BASE_URL}?action=getItem&id=${id}`, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    create: async (itemData: Partial<InventoryItem>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'createItem', ...itemData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'items_list');
+      return result;
+    },
+
+    upsert: async (itemData: Partial<InventoryItem>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'upsertItem', ...itemData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'items_list');
+      return result;
+    },
+
+    delete: async (id: string) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'deleteItem', id }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'items_list');
       return result;
     },
   },

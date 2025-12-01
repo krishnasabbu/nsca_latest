@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Briefcase,
   TrendingUp,
+  Package,
 } from 'lucide-react';
 
 interface NavItem {
@@ -37,6 +38,7 @@ const adminNavItems: NavItem[] = [
   { to: '/admin/sms-messages', icon: <MessageSquare size={20} />, label: 'SMS Messages', roles: ['admin'] },
   { to: '/admin/expenses', icon: <Briefcase size={20} />, label: 'Expenses', roles: ['admin'] },
   { to: '/admin/investments', icon: <TrendingUp size={20} />, label: 'Investments', roles: ['admin'] },
+  { to: '/admin/inventory', icon: <Package size={20} />, label: 'Inventory', roles: ['admin'] },
 ];
 
 const coachNavItems: NavItem[] = [

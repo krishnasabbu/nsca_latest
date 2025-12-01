@@ -14,6 +14,7 @@ import { SalaryPage } from './pages/Admin/SalaryPage';
 import { SmsMessagesPage } from './pages/Admin/SmsMessagesPage';
 import { ExpensesPage } from './pages/Admin/ExpensesPage';
 import { InvestmentsPage } from './pages/Admin/InvestmentsPage';
+import { InventoryPage } from './pages/Admin/InventoryPage';
 import { CoachDashboard } from './pages/Coach/CoachDashboard';
 import { CoachPlayersPage } from './pages/Coach/CoachPlayersPage';
 
@@ -68,6 +69,7 @@ function App() {
           <Route path="sms-messages" element={<SmsMessagesPage />} />
           <Route path="expenses" element={<ExpensesPage />} />
           <Route path="investments" element={<InvestmentsPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
         </Route>
 
         <Route

@@ -145,3 +145,23 @@ export interface Investment {
   name: string;
   amount: number;
 }
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt?: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  categoryId: string;
+  categoryName: string;
+  quantity: number;
+  unit: string;
+  costPrice: number;
+  sellingPrice: number;
+  date: string;
+  notes?: string;
+}
