@@ -76,7 +76,7 @@ export function SmsMessagesPage() {
       filtered = filtered.filter(msg =>
         msg.fullMessage?.toLowerCase().includes(term) ||
         msg.partyName?.toLowerCase().includes(term) ||
-        msg.transactionId?.toLowerCase().includes(term) ||
+        (msg.transactionId && String(msg.transactionId).toLowerCase().includes(term)) ||
         msg.upiId?.toLowerCase().includes(term)
       );
     }
