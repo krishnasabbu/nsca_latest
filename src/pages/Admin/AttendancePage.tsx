@@ -10,6 +10,7 @@ export function AttendancePage() {
   const [players, setPlayers] = useState<User[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [markingAttendance, setMarkingAttendance] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedBatch, setSelectedBatch] = useState<string>('all');
   const [bulkStatus, setBulkStatus] = useState<'present' | 'absent' | 'late'>('present');
@@ -46,6 +47,7 @@ export function AttendancePage() {
   };
 
   const markAttendance = async (playerId: string, status: 'present' | 'absent' | 'late') => {
+    setMarkingAttendance(true);
     try {
       const existing = attendance.find((a) => a.userId === playerId && normalizeDate(a.date) === selectedDate);
       const player = players.find((p) => p.id === playerId);
@@ -71,12 +73,15 @@ export function AttendancePage() {
       await loadData();
     } catch (error) {
       console.error('Failed to mark attendance:', error);
+    } finally {
+      setMarkingAttendance(false);
     }
   };
 
   const markBulkAttendance = async () => {
     if (!confirm(`Mark all displayed students as ${bulkStatus}?`)) return;
 
+    setMarkingAttendance(true);
     try {
       const filteredPlayersList = getFilteredPlayers();
 
@@ -108,6 +113,8 @@ export function AttendancePage() {
     } catch (error) {
       console.error('Failed to mark bulk attendance:', error);
       alert('Failed to mark bulk attendance');
+    } finally {
+      setMarkingAttendance(false);
     }
   };
 
@@ -309,6 +316,15 @@ export function AttendancePage() {
           </div>
         </CardBody>
       </Card>
+
+      {markingAttendance && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl flex flex-col items-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent"></div>
+            <p className="text-gray-900 dark:text-white font-medium">Marking attendance...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
