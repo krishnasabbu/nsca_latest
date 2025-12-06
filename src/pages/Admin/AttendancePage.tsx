@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/UI/Card';
-import { Calendar, Check, X, Clock, Users } from 'lucide-react';
+import { Calendar, Check, X, Clock, Users, Search } from 'lucide-react';
 import { api } from '../../services/api';
 import { Attendance, User, Batch } from '../../types';
 import { useAuthStore } from '../../store/authStore';
@@ -13,6 +13,7 @@ export function AttendancePage() {
   const [markingAttendance, setMarkingAttendance] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedBatch, setSelectedBatch] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [bulkStatus, setBulkStatus] = useState<'present' | 'absent' | 'late'>('present');
   const user = useAuthStore((state) => state.user);
 
@@ -124,10 +125,19 @@ export function AttendancePage() {
   };
 
   const getFilteredPlayers = () => {
-    if (selectedBatch === 'all') {
-      return players;
+    let filtered = players;
+
+    if (selectedBatch !== 'all') {
+      filtered = filtered.filter((p) => p.batchId === selectedBatch);
     }
-    return players.filter((p) => p.batchId === selectedBatch);
+
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((p) =>
+        p.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    return filtered;
   };
 
   const filteredPlayers = getFilteredPlayers();
@@ -223,6 +233,17 @@ export function AttendancePage() {
                   ))}
                 </select>
               </div>
+
+              <div className="flex items-center space-x-2 flex-1 min-w-[200px]">
+                <Search className="text-green-500" size={24} />
+                <input
+                  type="text"
+                  placeholder="Search player..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500"
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
@@ -253,7 +274,7 @@ export function AttendancePage() {
           <div className="space-y-2">
             {filteredPlayers.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                No students found for the selected batch.
+                {searchQuery ? 'No students found matching your search.' : 'No students found for the selected batch.'}
               </div>
             ) : (
               filteredPlayers.map((player) => {
