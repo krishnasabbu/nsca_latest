@@ -401,7 +401,7 @@ export function InventoryPage() {
                         <td className="py-3 px-4 text-gray-900 dark:text-white">{item.name}</td>
                         <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{item.categoryName}</td>
                         <td className="py-3 px-4 text-gray-900 dark:text-white">
-                          {item.quantity} {item.unit}
+                          {item.quantity}
                         </td>
                         <td className="py-3 px-4 text-gray-900 dark:text-white">₹{item.costPrice.toLocaleString()}</td>
                         <td className="py-3 px-4 text-gray-900 dark:text-white">₹{item.sellingPrice.toLocaleString()}</td>
