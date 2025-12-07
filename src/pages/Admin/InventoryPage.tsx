@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/UI/Card';
-import { Package, Plus, Edit2, Trash2, Layers, Box } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, Layers, Box, RefreshCw } from 'lucide-react';
 import { api } from '../../services/api';
 import { Category, InventoryItem } from '../../types';
 import { Modal } from '../../components/UI/Modal';
@@ -9,6 +9,7 @@ export function InventoryPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState<'categories' | 'items'>('categories');
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showItemModal, setShowItemModal] = useState(false);
@@ -31,11 +32,16 @@ export function InventoryPage() {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (forceSync: boolean = false) => {
     try {
+      if (forceSync) {
+        setSyncing(true);
+      } else {
+        setLoading(true);
+      }
       const [categoriesData, itemsData] = await Promise.all([
-        api.categories.list(),
-        api.items.list(),
+        api.categories.list(forceSync),
+        api.items.list(forceSync),
       ]);
       setCategories(categoriesData);
       setItems(itemsData);
@@ -43,7 +49,12 @@ export function InventoryPage() {
       console.error('Failed to load data:', error);
     } finally {
       setLoading(false);
+      setSyncing(false);
     }
+  };
+
+  const handleSync = async () => {
+    await loadData(true);
   };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
@@ -176,9 +187,19 @@ export function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Inventory Management</h1>
-        <p className="text-gray-600 dark:text-gray-400">Manage categories and inventory items</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Inventory Management</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage categories and inventory items</p>
+        </div>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
+          {syncing ? 'Syncing...' : 'Sync'}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

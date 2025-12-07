@@ -738,7 +738,9 @@ export const api = {
           const response = await fetch(`${API_BASE_URL}?action=listCategories`, {
             redirect: 'follow',
           });
-          return handleResponse(response);
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('categories');
+          return data;
         },
         !forceSync
       );
@@ -802,7 +804,9 @@ export const api = {
           const response = await fetch(`${API_BASE_URL}?action=listItems`, {
             redirect: 'follow',
           });
-          return handleResponse(response);
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('items');
+          return data;
         },
         !forceSync
       );
