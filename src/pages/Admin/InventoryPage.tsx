@@ -11,6 +11,7 @@ export function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState<'categories' | 'items'>('categories');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -177,6 +178,23 @@ export function InventoryPage() {
     return items.reduce((sum, item) => sum + item.quantity, 0);
   };
 
+  const handleCategoryClick = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+    setActiveTab('items');
+  };
+
+  const clearCategoryFilter = () => {
+    setSelectedCategoryId(null);
+  };
+
+  const filteredItems = selectedCategoryId
+    ? items.filter(item => item.categoryId === selectedCategoryId)
+    : items;
+
+  const selectedCategory = selectedCategoryId
+    ? categories.find(c => c.id === selectedCategoryId)
+    : null;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -285,19 +303,26 @@ export function InventoryPage() {
               {categories.map((category) => (
                 <div
                   key={category.id}
-                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-green-500 transition-colors cursor-pointer"
+                  onClick={() => handleCategoryClick(category.id)}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-semibold text-gray-900 dark:text-white">{category.name}</h3>
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => openEditCategory(category)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditCategory(category);
+                        }}
                         className="text-blue-600 hover:text-blue-700"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button
-                        onClick={() => deleteCategory(category.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteCategory(category.id);
+                        }}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 size={16} />
@@ -321,7 +346,22 @@ export function InventoryPage() {
         <Card>
           <CardBody>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Items</h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Items</h2>
+                {selectedCategory && (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900 rounded-lg">
+                    <span className="text-sm text-green-800 dark:text-green-200">
+                      Filtered by: {selectedCategory.name}
+                    </span>
+                    <button
+                      onClick={clearCategoryFilter}
+                      className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={() => {
                   setEditingItem(null);
@@ -349,36 +389,44 @@ export function InventoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item) => (
-                    <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="py-3 px-4 text-gray-900 dark:text-white">{item.name}</td>
-                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{item.categoryName}</td>
-                      <td className="py-3 px-4 text-gray-900 dark:text-white">
-                        {item.quantity} {item.unit}
-                      </td>
-                      <td className="py-3 px-4 text-gray-900 dark:text-white">₹{item.costPrice.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-gray-900 dark:text-white">₹{item.sellingPrice.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-gray-900 dark:text-white font-semibold">
-                        ₹{(item.quantity * item.costPrice).toLocaleString()}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => openEditItem(item)}
-                            className="text-blue-600 hover:text-blue-700"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => deleteItem(item.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                  {filteredItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-gray-500 dark:text-gray-400">
+                        {selectedCategory ? `No items found in ${selectedCategory.name}` : 'No items found'}
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredItems.map((item) => (
+                      <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="py-3 px-4 text-gray-900 dark:text-white">{item.name}</td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{item.categoryName}</td>
+                        <td className="py-3 px-4 text-gray-900 dark:text-white">
+                          {item.quantity} {item.unit}
+                        </td>
+                        <td className="py-3 px-4 text-gray-900 dark:text-white">₹{item.costPrice.toLocaleString()}</td>
+                        <td className="py-3 px-4 text-gray-900 dark:text-white">₹{item.sellingPrice.toLocaleString()}</td>
+                        <td className="py-3 px-4 text-gray-900 dark:text-white font-semibold">
+                          ₹{(item.quantity * item.costPrice).toLocaleString()}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => openEditItem(item)}
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => deleteItem(item.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
