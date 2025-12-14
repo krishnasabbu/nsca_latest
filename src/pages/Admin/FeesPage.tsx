@@ -48,6 +48,28 @@ export function FeesPage() {
       if (dateStr instanceof Date) {
         return dateStr;
       }
+
+      if (typeof dateStr === 'string' && dateStr.includes('-') && !dateStr.includes('T')) {
+        const parts = dateStr.split(' ');
+        const datePart = parts[0];
+        const timePart = parts[1] || '00:00:00';
+
+        const dateComponents = datePart.split('-');
+
+        if (dateComponents.length === 3 && dateComponents[0].length === 2) {
+          const day = parseInt(dateComponents[0], 10);
+          const month = parseInt(dateComponents[1], 10) - 1;
+          const year = parseInt(dateComponents[2], 10) + 2000;
+
+          const timeComponents = timePart.split(':');
+          const hours = parseInt(timeComponents[0], 10) || 0;
+          const minutes = parseInt(timeComponents[1], 10) || 0;
+          const seconds = parseInt(timeComponents[2], 10) || 0;
+
+          return new Date(year, month, day, hours, minutes, seconds);
+        }
+      }
+
       return new Date(dateStr);
     } catch (e) {
       console.error('Date parse error:', e, dateStr);
@@ -564,7 +586,31 @@ function StudentLedgerModal({ isOpen, onClose, student, feeRecords, onDelete }: 
 
   const parseDate = (dateStr: string | Date) => {
     try {
-      if (dateStr instanceof Date) return dateStr;
+      if (dateStr instanceof Date) {
+        return dateStr;
+      }
+
+      if (typeof dateStr === 'string' && dateStr.includes('-') && !dateStr.includes('T')) {
+        const parts = dateStr.split(' ');
+        const datePart = parts[0];
+        const timePart = parts[1] || '00:00:00';
+
+        const dateComponents = datePart.split('-');
+
+        if (dateComponents.length === 3 && dateComponents[0].length === 2) {
+          const day = parseInt(dateComponents[0], 10);
+          const month = parseInt(dateComponents[1], 10) - 1;
+          const year = parseInt(dateComponents[2], 10) + 2000;
+
+          const timeComponents = timePart.split(':');
+          const hours = parseInt(timeComponents[0], 10) || 0;
+          const minutes = parseInt(timeComponents[1], 10) || 0;
+          const seconds = parseInt(timeComponents[2], 10) || 0;
+
+          return new Date(year, month, day, hours, minutes, seconds);
+        }
+      }
+
       return new Date(dateStr);
     } catch {
       return new Date();
