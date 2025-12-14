@@ -255,37 +255,42 @@ export function FeesPage() {
             </div>
           </div>
 
-          <div className="mb-4 flex space-x-2">
-            <button
-              onClick={() => setFilterStatus('all')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filterStatus === 'all'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              All Students
-            </button>
-            <button
-              onClick={() => setFilterStatus('paid')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filterStatus === 'paid'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Paid
-            </button>
-            <button
-              onClick={() => setFilterStatus('pending')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filterStatus === 'pending'
-                  ? 'bg-red-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Pending
-            </button>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setFilterStatus('all')}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  filterStatus === 'all'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                All Students
+              </button>
+              <button
+                onClick={() => setFilterStatus('paid')}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  filterStatus === 'paid'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                Paid
+              </button>
+              <button
+                onClick={() => setFilterStatus('pending')}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  filterStatus === 'pending'
+                    ? 'bg-red-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                Pending
+              </button>
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              Showing {filteredStudents.length} of {students.length} students
+            </div>
           </div>
 
           <div className="overflow-x-auto">
