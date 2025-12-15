@@ -133,14 +133,23 @@ export function SalaryPage() {
 
     const paidAmount = superAdminPaid + otherStaffPaid;
     const pendingAmount = totalMaxSalaries - paidAmount;
-    const growth = expectedCollection - paidAmount;
+
+    const needToPay = staff
+      .filter((member) => member.role !== 'Super Admin')
+      .reduce((sum, member) => {
+        const salaryRecord = getStaffSalaryStatus(member);
+        const maxSalary = getMaxSalaryForStaff(member);
+        const paidSalary = salaryRecord ? Number(salaryRecord.salary) : 0;
+        const pending = Math.max(0, maxSalary - paidSalary);
+        return sum + pending;
+      }, 0);
 
     return {
       totalSalaries: expectedCollection,
       paidAmount,
       pendingAmount: pendingAmount > 0 ? pendingAmount : 0,
       totalStaff: staff.length,
-      growth: growth > 0 ? growth : 0,
+      growth: needToPay,
     };
   };
 
