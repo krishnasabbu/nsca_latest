@@ -32,9 +32,11 @@ export function StaffPage() {
 
   const loadStaff = async () => {
     try {
-      const users = await api.users.list();
+      const [staffList, users] = await Promise.all([
+        api.users.getStaff(),
+        api.users.list(),
+      ]);
       setAllUsers(users);
-      const staffList = users.filter((u) => u.role === 'coach' || u.role === 'support');
       const staffWithCounts = staffList.map((s) => ({
         ...s,
         studentsCount: s.role === 'coach' ? users.filter((u) => u.assignedCoachId === s.id).length : 0,

@@ -1,7 +1,7 @@
 import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord, SmsMessage, Work, Investment, Category, InventoryItem, Salary } from '../types';
 import { cacheManager } from './cache';
 
-const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbwRXglYIGggcjK1izTyt36w1yZm2zSQDs9C-bQArAzDD_qLN0p1dcClfCiunDhmjHr1ZQ/exec';
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbwaJbGdp8dqvdjshJ_wJZBXPFvy3ccMXeEKfWSpEeWfJ5W-sb31q0W0wGKO47o4nM4Twg/exec';
 
 const handleResponse = async (response: Response) => {
   const data = await response.json().catch(() => ({ error: 'Network error' }));
@@ -139,6 +139,21 @@ export const api = {
             redirect: 'follow',
           });
           return handleResponse(response);
+        },
+        !forceSync
+      );
+    },
+
+    getStaff: async (forceSync: boolean = false): Promise<User[]> => {
+      return fetchWithCache(
+        'staff_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=getStaff`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('staff');
+          return data;
         },
         !forceSync
       );

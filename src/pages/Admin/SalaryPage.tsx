@@ -31,11 +31,10 @@ export function SalaryPage() {
   const loadData = async (forceSync: boolean = false) => {
     try {
       if (forceSync) setLoading(true);
-      const [users, allSalaries] = await Promise.all([
-        api.users.list(forceSync),
+      const [staffList, allSalaries] = await Promise.all([
+        api.users.getStaff(forceSync),
         api.salaries.list(forceSync),
       ]);
-      const staffList = users.filter((u) => u.role === 'coach' || u.role === 'support');
       setStaff(staffList);
       setSalaries(allSalaries);
     } catch (error) {
