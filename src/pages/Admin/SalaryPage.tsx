@@ -33,6 +33,7 @@ export function SalaryPage() {
   const loadData = async (forceSync: boolean = false) => {
     try {
       if (forceSync) setLoading(true);
+      
       const [staffList, allSalaries, allUsers, fees] = await Promise.all([
         api.users.getStaff(true),
         api.salaries.list(true),
