@@ -896,6 +896,7 @@ export const api = {
         !forceSync
       );
     },
+    
 
     get: async (id: string): Promise<Salary> => {
       const response = await fetch(`${API_BASE_URL}?action=getSalary&id=${id}`, {
