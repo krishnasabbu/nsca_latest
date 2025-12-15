@@ -254,9 +254,9 @@ export function SalaryPage() {
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Staff Member</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Role</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Max Salary</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Paid Salary</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Pending Salary</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Status</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Date</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-white">Actions</th>
@@ -266,6 +266,13 @@ export function SalaryPage() {
                 {staff.map((member) => {
                   const salaryRecord = getStaffSalaryStatus(member);
                   const hasSalary = salaryRecord !== null;
+                  const maxSalary = getMaxSalaryForStaff(member);
+                  const paidSalary = member.role === 'Super Admin'
+                    ? calculateMonthlyFeeCollection()
+                    : hasSalary
+                    ? Number(salaryRecord.salary)
+                    : 0;
+                  const pendingSalary = Math.max(0, maxSalary - paidSalary);
 
                   return (
                     <tr
@@ -277,11 +284,13 @@ export function SalaryPage() {
                           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-full flex items-center justify-center text-white font-semibold">
                             {member.name?.charAt(0).toUpperCase()}
                           </div>
-                          <span className="font-medium text-gray-900 dark:text-white">{member.name}</span>
+                          <div>
+                            <div className="font-medium text-gray-900 dark:text-white">{member.name}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                              {member.role === 'Head Coach' ? 'Head Coach' : member.role}
+                            </div>
+                          </div>
                         </div>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400 capitalize">
-                        {member.role === 'Head Coach' ? 'Head Coach' : member.role}
                       </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
                         {getMaxSalaryForStaff(member) >= 0 ? (
@@ -299,22 +308,40 @@ export function SalaryPage() {
                         )}
                       </td>
                       <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">
-                        {member.role === 'Super Admin' ? (
+                        {paidSalary > 0 ? (
                           <>
-                            ₹{calculateMonthlyFeeCollection().toLocaleString()}
-                            <span className="ml-1 text-xs text-green-500">(From Fee Collection)</span>
+                            ₹{paidSalary.toLocaleString()}
+                            {member.role === 'Super Admin' && (
+                              <span className="ml-1 text-xs text-green-500">(Fee Collection)</span>
+                            )}
                           </>
-                        ) : hasSalary ? (
-                          `₹${Number(salaryRecord.salary).toLocaleString()}`
                         ) : (
                           '-'
                         )}
                       </td>
+                      <td className="py-3 px-4 font-semibold text-red-600">
+                        ₹{pendingSalary.toLocaleString()}
+                      </td>
                       <td className="py-3 px-4">
                         {member.role === 'Super Admin' ? (
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 w-fit bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                            <CheckCircle size={14} />
-                            <span>Paid</span>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 w-fit ${
+                              pendingSalary === 0
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            }`}
+                          >
+                            {pendingSalary === 0 ? (
+                              <>
+                                <CheckCircle size={14} />
+                                <span>Paid</span>
+                              </>
+                            ) : (
+                              <>
+                                <Clock size={14} />
+                                <span>Pending</span>
+                              </>
+                            )}
                           </span>
                         ) : hasSalary ? (
                           <span
