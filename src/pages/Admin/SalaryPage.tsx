@@ -55,11 +55,13 @@ export function SalaryPage() {
   };
 
   const getMaxSalaryForStaff = (staffMember: User) => {
+    const monthlyExpected = calculateMonthlyExpected();
     if (staffMember.role === 'Head Coach') {
-      const monthlyExpected = calculateMonthlyExpected();
       return Math.round(monthlyExpected * 0.4);
+    }else if (staffMember.role === 'Super Admin') {
+      return Math.round(monthlyExpected * 0.6);
     }
-    return staffMember.monthlyFee || 0;
+    return staffMember.monthlyFee || 0; 
   };
 
   const filterSalaries = () => {
@@ -229,11 +231,14 @@ export function SalaryPage() {
                         {member.role === 'Head Coach' ? 'Head Coach' : member.role}
                       </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-                        {getMaxSalaryForStaff(member) > 0 ? (
+                        {getMaxSalaryForStaff(member) >= 0 ? (
                           <>
                             ₹{getMaxSalaryForStaff(member).toLocaleString()}
                             {member.role === 'Head Coach' && (
-                              <span className="ml-1 text-xs text-blue-500">(40% of Expected)</span>
+                              <span className="ml-1 text-xs text-blue-500">(40% of Monthly Collection)</span>
+                            )}
+                            {member.role === 'Super Admin' && (
+                              <span className="ml-1 text-xs text-blue-500">(60% of Monthly Collection)</span>
                             )}
                           </>
                         ) : (
