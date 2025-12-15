@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/UI/Card';
 import { Modal } from '../../components/UI/Modal';
-import { Wallet, CheckCircle, Clock, Plus, Edit, Trash2 } from 'lucide-react';
+import { Wallet, CheckCircle, Clock, Plus, Edit, Trash2, TrendingUp } from 'lucide-react';
 import { api } from '../../services/api';
 import { User, Salary } from '../../types';
 
@@ -115,6 +115,7 @@ export function SalaryPage() {
   };
 
   const calculateStats = () => {
+    const expectedCollection = calculateMonthlyExpected();
     const totalMaxSalaries = staff.reduce((sum, member) => sum + getMaxSalaryForStaff(member), 0);
 
     const feeCollection = calculateMonthlyFeeCollection();
@@ -131,12 +132,14 @@ export function SalaryPage() {
 
     const paidAmount = superAdminPaid + otherStaffPaid;
     const pendingAmount = totalMaxSalaries - paidAmount;
+    const growth = expectedCollection - totalMaxSalaries;
 
     return {
-      totalSalaries: totalMaxSalaries,
+      totalSalaries: expectedCollection,
       paidAmount,
       pendingAmount: pendingAmount > 0 ? pendingAmount : 0,
       totalStaff: staff.length,
+      growth: growth > 0 ? growth : 0,
     };
   };
 
@@ -169,7 +172,7 @@ export function SalaryPage() {
         <p className="text-gray-600 dark:text-gray-400">Manage coach and staff salaries</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardBody className="flex items-center space-x-4">
             <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20">
@@ -209,6 +212,20 @@ export function SalaryPage() {
               <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Pending</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 ₹{stats.pendingAmount.toLocaleString()}
+              </p>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardBody className="flex items-center space-x-4">
+            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+              <TrendingUp className="h-8 w-8 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Growth</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                ₹{stats.growth.toLocaleString()}
               </p>
             </div>
           </CardBody>
