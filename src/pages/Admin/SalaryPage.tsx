@@ -182,7 +182,8 @@ export function SalaryPage() {
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Staff Member</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Role</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Salary</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Max Salary</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Paid Salary</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Status</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">Date</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-white">Actions</th>
@@ -207,6 +208,9 @@ export function SalaryPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400 capitalize">{member.role}</td>
+                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                        {member.monthlyFee ? `₹${Number(member.monthlyFee).toLocaleString()}` : 'Not set'}
+                      </td>
                       <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">
                         {hasSalary ? `₹${Number(salaryRecord.salary).toLocaleString()}` : '-'}
                       </td>
@@ -394,16 +398,34 @@ function SalaryFormModal({ isOpen, onClose, data, month, year, onSuccess }: Sala
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Salary Amount (₹) *
+              Max Monthly Salary
             </label>
             <input
-              type="number"
-              value={formData.salary}
-              onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
-              required
+              type="text"
+              value={data.user.monthlyFee ? `₹${Number(data.user.monthlyFee).toLocaleString()}` : 'Not set'}
+              disabled
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Salary Amount (₹) *
+          </label>
+          <input
+            type="number"
+            value={formData.salary}
+            onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+            required
+            max={data.user.monthlyFee || undefined}
+          />
+          {data.user.monthlyFee && (
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Maximum allowed: ₹{Number(data.user.monthlyFee).toLocaleString()}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">

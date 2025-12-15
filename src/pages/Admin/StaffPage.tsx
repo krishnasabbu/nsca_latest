@@ -158,14 +158,54 @@ export function StaffPage() {
 
 function StaffFormModal({ isOpen, onClose, staff, onSuccess }: any) {
   const [formData, setFormData] = useState({
-    name: '', phone: '', email: '', password: '', role: 'coach', specialization: '', experience: ''
+    name: '',
+    phone: '',
+    email: '',
+    password: '',
+    role: 'coach',
+    age: '',
+    altPhone: '',
+    monthlyFee: '',
+    specialization: '',
+    joinDate: '',
+    experience: '',
+    upi: '',
+    status: 'active',
   });
 
   useEffect(() => {
     if (staff) {
-      setFormData({ name: staff.name || '', phone: staff.phone || '', email: staff.email || '', password: '', role: staff.role || 'coach', specialization: staff.specialization || '', experience: staff.experience || '' });
+      setFormData({
+        name: staff.name || '',
+        phone: staff.phone || '',
+        email: staff.email || '',
+        password: '',
+        role: staff.role || 'coach',
+        age: staff.age || '',
+        altPhone: staff.altPhone || '',
+        monthlyFee: staff.monthlyFee?.toString() || '',
+        specialization: staff.specialization || '',
+        joinDate: staff.joinDate || '',
+        experience: staff.experience || '',
+        upi: staff.upi || '',
+        status: staff.status || 'active',
+      });
     } else {
-      setFormData({ name: '', phone: '', email: '', password: '', role: 'coach', specialization: '', experience: '' });
+      setFormData({
+        name: '',
+        phone: '',
+        email: '',
+        password: '',
+        role: 'coach',
+        age: '',
+        altPhone: '',
+        monthlyFee: '',
+        specialization: '',
+        joinDate: '',
+        experience: '',
+        upi: '',
+        status: 'active',
+      });
     }
   }, [staff]);
 
@@ -173,9 +213,18 @@ function StaffFormModal({ isOpen, onClose, staff, onSuccess }: any) {
     e.preventDefault();
     try {
       if (staff) {
-        await api.users.upsert({ id: staff.id, ...formData, role: formData.role as 'admin' | 'coach' | 'student' | 'support' });
+        await api.users.upsert({
+          id: staff.id,
+          ...formData,
+          role: formData.role as 'admin' | 'coach' | 'student' | 'support',
+          status: formData.status as 'active' | 'inactive',
+        });
       } else {
-        await api.users.create({ ...formData, role: formData.role as 'admin' | 'coach' | 'student' | 'support' });
+        await api.users.create({
+          ...formData,
+          role: formData.role as 'admin' | 'coach' | 'student' | 'support',
+          status: formData.status as 'active' | 'inactive',
+        });
       }
       onSuccess();
       onClose();
@@ -185,46 +234,151 @@ function StaffFormModal({ isOpen, onClose, staff, onSuccess }: any) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={staff ? 'Edit Staff' : 'Add Staff'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={staff ? 'Edit Staff' : 'Add Staff'} size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name *</label>
-            <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" required />
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+              required
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone *</label>
-            <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" required />
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+              required
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
-            <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" />
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+            />
           </div>
           {!staff && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password *</label>
-              <input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" required />
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+                required
+              />
             </div>
           )}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role *</label>
-            <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500">
+            <select
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+            >
               <option value="coach">Coach</option>
               <option value="support">Support Staff</option>
             </select>
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Age</label>
+            <input
+              type="number"
+              value={formData.age}
+              onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Alternative Phone</label>
+            <input
+              type="tel"
+              value={formData.altPhone}
+              onChange={(e) => setFormData({ ...formData, altPhone: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monthly Salary (₹)</label>
+            <input
+              type="number"
+              value={formData.monthlyFee}
+              onChange={(e) => setFormData({ ...formData, monthlyFee: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Specialization</label>
-            <input type="text" value={formData.specialization} onChange={(e) => setFormData({ ...formData, specialization: e.target.value })} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500" />
+            <input
+              type="text"
+              value={formData.specialization}
+              onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Join Date</label>
+            <input
+              type="date"
+              value={formData.joinDate}
+              onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">UPI ID</label>
+            <input
+              type="text"
+              value={formData.upi}
+              onChange={(e) => setFormData({ ...formData, upi: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+              placeholder="example@upi"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Experience</label>
-          <textarea value={formData.experience} onChange={(e) => setFormData({ ...formData, experience: e.target.value })} rows={3} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"></textarea>
+          <textarea
+            value={formData.experience}
+            onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+            rows={3}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+          ></textarea>
         </div>
         <div className="flex justify-end space-x-3 pt-4">
-          <button type="button" onClick={onClose} className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
-          <button type="submit" className="px-6 py-2 bg-gradient-to-r from-green-600 to-yellow-500 text-white rounded-lg hover:from-green-700 hover:to-yellow-600">{staff ? 'Update' : 'Add'} Staff</button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-6 py-2 bg-gradient-to-r from-green-600 to-yellow-500 text-white rounded-lg hover:from-green-700 hover:to-yellow-600"
+          >
+            {staff ? 'Update' : 'Add'} Staff
+          </button>
         </div>
       </form>
     </Modal>
