@@ -79,18 +79,16 @@ export function SalaryPage() {
   };
 
   const calculateStats = () => {
-    const totalSalaries = filteredSalaries.reduce((sum, s) => sum + Number(s.salary), 0);
+    const totalMaxSalaries = staff.reduce((sum, member) => sum + getMaxSalaryForStaff(member), 0);
     const paidAmount = filteredSalaries
       .filter((s) => s.status === 'paid')
       .reduce((sum, s) => sum + Number(s.salary), 0);
-    const pendingAmount = filteredSalaries
-      .filter((s) => s.status === 'pending')
-      .reduce((sum, s) => sum + Number(s.salary), 0);
+    const pendingAmount = totalMaxSalaries - paidAmount;
 
     return {
-      totalSalaries,
+      totalSalaries: filteredSalaries.reduce((sum, s) => sum + Number(s.salary), 0),
       paidAmount,
-      pendingAmount,
+      pendingAmount: pendingAmount > 0 ? pendingAmount : 0,
       totalStaff: staff.length,
     };
   };
