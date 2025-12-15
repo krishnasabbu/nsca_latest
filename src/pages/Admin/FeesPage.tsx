@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/UI/Card';
 import { Modal } from '../../components/UI/Modal';
-import { DollarSign, CheckCircle, XCircle, Clock, Plus, Eye, Filter, Trash2 } from 'lucide-react';
+import { DollarSign, CheckCircle, XCircle, Clock, Plus, Eye, Filter, Trash2, Users } from 'lucide-react';
 import { api } from '../../services/api';
 import { User, FeeRecord } from '../../types';
 
@@ -162,7 +162,7 @@ export function FeesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardBody className="flex items-center space-x-4">
             <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20">
@@ -206,6 +206,22 @@ export function FeesPage() {
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 ₹{stats.totalPending.toLocaleString()}
+              </p>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardBody className="flex items-center space-x-4">
+            <div className="p-4 rounded-xl bg-orange-50 dark:bg-orange-900/20">
+              <Users className="h-8 w-8 text-orange-500" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                Coach (40%)
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                ₹{Math.round(stats.totalExpected * 0.4).toLocaleString()}
               </p>
             </div>
           </CardBody>

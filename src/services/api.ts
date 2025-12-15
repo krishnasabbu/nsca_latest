@@ -1,7 +1,7 @@
-import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord, SmsMessage, Work, Investment, Category, InventoryItem } from '../types';
+import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord, SmsMessage, Work, Investment, Category, InventoryItem, Salary } from '../types';
 import { cacheManager } from './cache';
 
-const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbz7ERPkS7zH8CrY9JU4pfFoH4Q2oJ09psiStLhlDnn_DIDCq3Tg7syr61BDWWFq1xWgiw/exec';
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbwRXglYIGggcjK1izTyt36w1yZm2zSQDs9C-bQArAzDD_qLN0p1dcClfCiunDhmjHr1ZQ/exec';
 
 const handleResponse = async (response: Response) => {
   const data = await response.json().catch(() => ({ error: 'Network error' }));
@@ -858,6 +858,98 @@ export const api = {
       });
       const result = await handleResponse(response);
       await cacheManager.remove('cache', 'items_list');
+      return result;
+    },
+  },
+
+  salaries: {
+    list: async (forceSync: boolean = false): Promise<Salary[]> => {
+      return fetchWithCache(
+        'salaries_list',
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=listSalaries`, {
+            redirect: 'follow',
+          });
+          const data = await handleResponse(response);
+          await cacheManager.setLastSyncTime('salaries');
+          return data;
+        },
+        !forceSync
+      );
+    },
+
+    get: async (id: string): Promise<Salary> => {
+      const response = await fetch(`${API_BASE_URL}?action=getSalary&id=${id}`, {
+        redirect: 'follow',
+      });
+      return handleResponse(response);
+    },
+
+    getUserSalaries: async (userId: string, forceSync: boolean = false): Promise<Salary[]> => {
+      return fetchWithCache(
+        `salaries_user_${userId}`,
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=getUserSalaries&userId=${userId}`, {
+            redirect: 'follow',
+          });
+          return handleResponse(response);
+        },
+        !forceSync
+      );
+    },
+
+    getSalariesByMonth: async (month: string, forceSync: boolean = false): Promise<Salary[]> => {
+      return fetchWithCache(
+        `salaries_month_${month}`,
+        async () => {
+          const response = await fetch(`${API_BASE_URL}?action=getSalariesByMonth&month=${month}`, {
+            redirect: 'follow',
+          });
+          return handleResponse(response);
+        },
+        !forceSync
+      );
+    },
+
+    create: async (salaryData: Partial<Salary>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'createSalary', ...salaryData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'salaries_list');
+      return result;
+    },
+
+    upsert: async (salaryData: Partial<Salary>) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'upsertSalary', ...salaryData }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'salaries_list');
+      return result;
+    },
+
+    delete: async (id: string) => {
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ action: 'deleteSalary', id }),
+        redirect: 'follow',
+      });
+      const result = await handleResponse(response);
+      await cacheManager.remove('cache', 'salaries_list');
       return result;
     },
   },

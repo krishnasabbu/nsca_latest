@@ -165,3 +165,11 @@ export interface InventoryItem {
   date: string;
   notes?: string;
 }
+
+export interface Salary {
+  id: string;
+  userId: string;
+  date: string;
+  salary: number;
+  status: 'paid' | 'pending';
+}
