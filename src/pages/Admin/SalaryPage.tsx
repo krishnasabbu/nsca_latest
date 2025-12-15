@@ -12,6 +12,7 @@ const MONTHS = [
 
 export function SalaryPage() {
   const [staff, setStaff] = useState<User[]>([]);
+  const [students, setStudents] = useState<User[]>([]);
   const [salaries, setSalaries] = useState<Salary[]>([]);
   const [filteredSalaries, setFilteredSalaries] = useState<Salary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,17 +32,32 @@ export function SalaryPage() {
   const loadData = async (forceSync: boolean = false) => {
     try {
       if (forceSync) setLoading(true);
-      const [staffList, allSalaries] = await Promise.all([
+      const [staffList, allSalaries, allUsers] = await Promise.all([
         api.users.getStaff(forceSync),
         api.salaries.list(forceSync),
+        api.users.list(forceSync),
       ]);
       setStaff(staffList);
       setSalaries(allSalaries);
+      const studentsList = allUsers.filter((u) => u.role === 'student');
+      setStudents(studentsList);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateMonthlyExpected = () => {
+    return students.reduce((sum, student) => sum + (student.monthlyFee || 0), 0);
+  };
+
+  const getMaxSalaryForStaff = (staffMember: User) => {
+    if (staffMember.role === 'head_coach') {
+      const monthlyExpected = calculateMonthlyExpected();
+      return Math.round(monthlyExpected * 0.4);
+    }
+    return staffMember.monthlyFee || 0;
   };
 
   const filterSalaries = () => {
@@ -207,9 +223,20 @@ export function SalaryPage() {
                           <span className="font-medium text-gray-900 dark:text-white">{member.name}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400 capitalize">{member.role}</td>
+                      <td className="py-3 px-4 text-gray-600 dark:text-gray-400 capitalize">
+                        {member.role === 'head_coach' ? 'Head Coach' : member.role}
+                      </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-                        {member.monthlyFee ? `₹${Number(member.monthlyFee).toLocaleString()}` : 'Not set'}
+                        {getMaxSalaryForStaff(member) > 0 ? (
+                          <>
+                            ₹{getMaxSalaryForStaff(member).toLocaleString()}
+                            {member.role === 'head_coach' && (
+                              <span className="ml-1 text-xs text-blue-500">(40% of Expected)</span>
+                            )}
+                          </>
+                        ) : (
+                          'Not set'
+                        )}
                       </td>
                       <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">
                         {hasSalary ? `₹${Number(salaryRecord.salary).toLocaleString()}` : '-'}
@@ -291,6 +318,8 @@ export function SalaryPage() {
         month={selectedMonth}
         year={selectedYear}
         onSuccess={() => loadData(true)}
+        monthlyExpected={calculateMonthlyExpected()}
+        getMaxSalary={getMaxSalaryForStaff}
       />
     </div>
   );
@@ -303,9 +332,11 @@ interface SalaryFormModalProps {
   month: number;
   year: number;
   onSuccess: () => void;
+  monthlyExpected: number;
+  getMaxSalary: (user: User) => number;
 }
 
-function SalaryFormModal({ isOpen, onClose, data, month, year, onSuccess }: SalaryFormModalProps) {
+function SalaryFormModal({ isOpen, onClose, data, month, year, onSuccess, monthlyExpected, getMaxSalary }: SalaryFormModalProps) {
   const [formData, setFormData] = useState({
     salary: '',
     date: '',
@@ -402,12 +433,30 @@ function SalaryFormModal({ isOpen, onClose, data, month, year, onSuccess }: Sala
             </label>
             <input
               type="text"
-              value={data.user.monthlyFee ? `₹${Number(data.user.monthlyFee).toLocaleString()}` : 'Not set'}
+              value={
+                getMaxSalary(data.user) > 0
+                  ? `₹${getMaxSalary(data.user).toLocaleString()}${data.user.role === 'head_coach' ? ' (40% of Expected)' : ''}`
+                  : 'Not set'
+              }
               disabled
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
             />
           </div>
         </div>
+
+        {data.user.role === 'head_coach' && (
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              <strong>Head Coach Salary Calculation:</strong> 40% of Monthly Expected
+            </p>
+            <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
+              Monthly Expected (Total Student Fees): ₹{monthlyExpected.toLocaleString()}
+            </p>
+            <p className="text-sm text-blue-700 dark:text-blue-400">
+              Max Salary (40%): ₹{getMaxSalary(data.user).toLocaleString()}
+            </p>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -419,11 +468,11 @@ function SalaryFormModal({ isOpen, onClose, data, month, year, onSuccess }: Sala
             onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
             required
-            max={data.user.monthlyFee || undefined}
+            max={getMaxSalary(data.user) || undefined}
           />
-          {data.user.monthlyFee && (
+          {getMaxSalary(data.user) > 0 && (
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Maximum allowed: ₹{Number(data.user.monthlyFee).toLocaleString()}
+              Maximum allowed: ₹{getMaxSalary(data.user).toLocaleString()}
             </p>
           )}
         </div>

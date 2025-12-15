@@ -4,7 +4,7 @@ export interface User {
   phone: string;
   email: string;
   password?: string;
-  role: 'admin' | 'coach' | 'student' | 'support';
+  role: 'admin' | 'coach' | 'head_coach' | 'student' | 'support';
   age?: string;
   batch?: string;
   batchId?: string;

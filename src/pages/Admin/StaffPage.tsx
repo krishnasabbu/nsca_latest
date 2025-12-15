@@ -216,13 +216,13 @@ function StaffFormModal({ isOpen, onClose, staff, onSuccess }: any) {
         await api.users.upsert({
           id: staff.id,
           ...formData,
-          role: formData.role as 'admin' | 'coach' | 'student' | 'support',
+          role: formData.role as 'admin' | 'coach' | 'head_coach' | 'student' | 'support',
           status: formData.status as 'active' | 'inactive',
         });
       } else {
         await api.users.create({
           ...formData,
-          role: formData.role as 'admin' | 'coach' | 'student' | 'support',
+          role: formData.role as 'admin' | 'coach' | 'head_coach' | 'student' | 'support',
           status: formData.status as 'active' | 'inactive',
         });
       }
@@ -286,6 +286,7 @@ function StaffFormModal({ isOpen, onClose, staff, onSuccess }: any) {
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
             >
               <option value="coach">Coach</option>
+              <option value="head_coach">Head Coach</option>
               <option value="support">Support Staff</option>
             </select>
           </div>
