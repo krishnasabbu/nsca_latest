@@ -33,10 +33,12 @@ export function SalaryPage() {
     try {
       if (forceSync) setLoading(true);
       const [staffList, allSalaries, allUsers] = await Promise.all([
-        api.users.getStaff(forceSync),
+        api.users.getStaff(true),
         api.salaries.list(forceSync),
         api.users.list(forceSync),
       ]);
+      console.log('SalaryPage - Staff API Response:', staffList);
+      console.log('SalaryPage - Number of staff:', staffList.length);
       setStaff(staffList);
       setSalaries(allSalaries);
       const studentsList = allUsers.filter((u) => u.role === 'student');

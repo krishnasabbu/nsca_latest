@@ -33,9 +33,11 @@ export function StaffPage() {
   const loadStaff = async () => {
     try {
       const [staffList, users] = await Promise.all([
-        api.users.getStaff(),
+        api.users.getStaff(true),
         api.users.list(),
       ]);
+      console.log('Staff API Response:', staffList);
+      console.log('Number of staff members:', staffList.length);
       setAllUsers(users);
       const staffWithCounts = staffList.map((s) => ({
         ...s,
@@ -44,6 +46,7 @@ export function StaffPage() {
       setStaff(staffWithCounts);
     } catch (error) {
       console.error('Failed to load staff:', error);
+      alert(`Failed to load staff: ${error}`);
     } finally {
       setLoading(false);
     }

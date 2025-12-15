@@ -149,10 +149,13 @@ export const api = {
       return fetchWithCache(
         'staff_list',
         async () => {
+          console.log('Fetching staff from:', `${STAFF_API_URL}?action=getStaff`);
           const response = await fetch(`${STAFF_API_URL}?action=getStaff`, {
             redirect: 'follow',
           });
           const data = await handleResponse(response);
+          console.log('Raw staff API response:', data);
+          console.log('Staff array length:', Array.isArray(data) ? data.length : 'Not an array');
           await cacheManager.setLastSyncTime('staff');
           return data;
         },
