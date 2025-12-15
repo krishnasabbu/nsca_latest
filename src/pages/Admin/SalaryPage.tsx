@@ -14,6 +14,7 @@ export function SalaryPage() {
   const [staff, setStaff] = useState<User[]>([]);
   const [students, setStudents] = useState<User[]>([]);
   const [salaries, setSalaries] = useState<Salary[]>([]);
+  const [feeRecords, setFeeRecords] = useState<any[]>([]);
   const [filteredSalaries, setFilteredSalaries] = useState<Salary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
@@ -32,15 +33,17 @@ export function SalaryPage() {
   const loadData = async (forceSync: boolean = false) => {
     try {
       if (forceSync) setLoading(true);
-      const [staffList, allSalaries, allUsers] = await Promise.all([
+      const [staffList, allSalaries, allUsers, fees] = await Promise.all([
         api.users.getStaff(true),
         api.salaries.list(forceSync),
         api.users.list(forceSync),
+        api.fees.list(forceSync),
       ]);
       console.log('SalaryPage - Staff API Response:', staffList);
       console.log('SalaryPage - Number of staff:', staffList.length);
       setStaff(staffList);
       setSalaries(allSalaries);
+      setFeeRecords(fees);
       const studentsList = allUsers.filter((u) => u.role === 'student');
       setStudents(studentsList);
     } catch (error) {
@@ -54,6 +57,39 @@ export function SalaryPage() {
     return students.reduce((sum, student) => sum + (student.monthlyFee || 0), 0);
   };
 
+  const parseDate = (dateStr: string | Date) => {
+    try {
+      if (dateStr instanceof Date) return dateStr;
+      if (typeof dateStr === 'string' && dateStr.includes('-') && !dateStr.includes('T')) {
+        const parts = dateStr.split(' ');
+        const datePart = parts[0];
+        const timePart = parts[1] || '00:00:00';
+        const dateComponents = datePart.split('-');
+        if (dateComponents.length === 3 && dateComponents[0].length === 2) {
+          const day = parseInt(dateComponents[0], 10);
+          const month = parseInt(dateComponents[1], 10) - 1;
+          const year = parseInt(dateComponents[2], 10) + 2000;
+          const timeComponents = timePart.split(':');
+          const hours = parseInt(timeComponents[0], 10) || 0;
+          const minutes = parseInt(timeComponents[1], 10) || 0;
+          const seconds = parseInt(timeComponents[2], 10) || 0;
+          return new Date(year, month, day, hours, minutes, seconds);
+        }
+      }
+      return new Date(dateStr);
+    } catch (e) {
+      return new Date();
+    }
+  };
+
+  const calculateMonthlyFeeCollection = () => {
+    const monthFees = feeRecords.filter((fee) => {
+      const feeDate = parseDate(fee.date);
+      return feeDate.getMonth() + 1 === selectedMonth && feeDate.getFullYear() === selectedYear;
+    });
+    return monthFees.reduce((sum, fee) => sum + Number(fee.amount), 0);
+  };
+
   const getMaxSalaryForStaff = (staffMember: User) => {
     const monthlyExpected = calculateMonthlyExpected();
     if (staffMember.role === 'Head Coach') {
@@ -61,7 +97,7 @@ export function SalaryPage() {
     }else if (staffMember.role === 'Super Admin') {
       return Math.round(monthlyExpected * 0.6);
     }
-    return staffMember.monthlyFee || 0; 
+    return staffMember.monthlyFee || 0;
   };
 
   const filterSalaries = () => {
@@ -80,9 +116,20 @@ export function SalaryPage() {
 
   const calculateStats = () => {
     const totalMaxSalaries = staff.reduce((sum, member) => sum + getMaxSalaryForStaff(member), 0);
-    const paidAmount = filteredSalaries
+
+    const feeCollection = calculateMonthlyFeeCollection();
+    const superAdmin = staff.find((s) => s.role === 'Super Admin');
+    const superAdminPaid = superAdmin ? feeCollection : 0;
+
+    const otherStaffPaid = filteredSalaries
       .filter((s) => s.status === 'paid')
-      .reduce((sum, s) => sum + Number(s.salary), 0);
+      .reduce((sum, s) => {
+        const staffMember = staff.find((m) => m.id === s.userId);
+        if (staffMember?.role === 'Super Admin') return sum;
+        return sum + Number(s.salary);
+      }, 0);
+
+    const paidAmount = superAdminPaid + otherStaffPaid;
     const pendingAmount = totalMaxSalaries - paidAmount;
 
     return {
@@ -252,10 +299,24 @@ export function SalaryPage() {
                         )}
                       </td>
                       <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">
-                        {hasSalary ? `₹${Number(salaryRecord.salary).toLocaleString()}` : '-'}
+                        {member.role === 'Super Admin' ? (
+                          <>
+                            ₹{calculateMonthlyFeeCollection().toLocaleString()}
+                            <span className="ml-1 text-xs text-green-500">(From Fee Collection)</span>
+                          </>
+                        ) : hasSalary ? (
+                          `₹${Number(salaryRecord.salary).toLocaleString()}`
+                        ) : (
+                          '-'
+                        )}
                       </td>
                       <td className="py-3 px-4">
-                        {hasSalary ? (
+                        {member.role === 'Super Admin' ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 w-fit bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            <CheckCircle size={14} />
+                            <span>Paid</span>
+                          </span>
+                        ) : hasSalary ? (
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 w-fit ${
                               salaryRecord.status === 'paid'
@@ -293,11 +354,19 @@ export function SalaryPage() {
                         )}
                       </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-                        {hasSalary ? new Date(salaryRecord.date).toLocaleDateString() : '-'}
+                        {member.role === 'Super Admin' ? (
+                          `${MONTHS[selectedMonth - 1]} ${selectedYear}`
+                        ) : hasSalary ? (
+                          new Date(salaryRecord.date).toLocaleDateString()
+                        ) : (
+                          '-'
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-end space-x-2">
-                          {hasSalary ? (
+                          {member.role === 'Super Admin' ? (
+                            <span className="text-xs text-gray-500 dark:text-gray-400 italic">Auto-calculated</span>
+                          ) : hasSalary ? (
                             <>
                               <button
                                 onClick={() => {
