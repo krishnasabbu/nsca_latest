@@ -133,7 +133,7 @@ export function SalaryPage() {
     const pendingAmount = totalMaxSalaries - paidAmount;
 
     return {
-      totalSalaries: filteredSalaries.reduce((sum, s) => sum + Number(s.salary), 0),
+      totalSalaries: totalMaxSalaries,
       paidAmount,
       pendingAmount: pendingAmount > 0 ? pendingAmount : 0,
       totalStaff: staff.length,
