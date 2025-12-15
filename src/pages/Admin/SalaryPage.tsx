@@ -55,7 +55,7 @@ export function SalaryPage() {
   };
 
   const getMaxSalaryForStaff = (staffMember: User) => {
-    if (staffMember.role === 'head_coach') {
+    if (staffMember.role === 'Head Coach') {
       const monthlyExpected = calculateMonthlyExpected();
       return Math.round(monthlyExpected * 0.4);
     }
@@ -226,13 +226,13 @@ export function SalaryPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400 capitalize">
-                        {member.role === 'head_coach' ? 'Head Coach' : member.role}
+                        {member.role === 'Head Coach' ? 'Head Coach' : member.role}
                       </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
                         {getMaxSalaryForStaff(member) > 0 ? (
                           <>
                             ₹{getMaxSalaryForStaff(member).toLocaleString()}
-                            {member.role === 'head_coach' && (
+                            {member.role === 'Head Coach' && (
                               <span className="ml-1 text-xs text-blue-500">(40% of Expected)</span>
                             )}
                           </>
