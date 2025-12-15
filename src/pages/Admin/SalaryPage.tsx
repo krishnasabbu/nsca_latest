@@ -132,7 +132,7 @@ export function SalaryPage() {
 
     const paidAmount = superAdminPaid + otherStaffPaid;
     const pendingAmount = totalMaxSalaries - paidAmount;
-    const growth = expectedCollection - totalMaxSalaries;
+    const growth = expectedCollection - paidAmount;
 
     return {
       totalSalaries: expectedCollection,
@@ -223,7 +223,7 @@ export function SalaryPage() {
               <TrendingUp className="h-8 w-8 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Growth</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Need to Pay</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 ₹{stats.growth.toLocaleString()}
               </p>
@@ -577,7 +577,7 @@ function SalaryFormModal({ isOpen, onClose, data, month, year, onSuccess, monthl
               type="text"
               value={
                 getMaxSalary(data.user) > 0
-                  ? `₹${getMaxSalary(data.user).toLocaleString()}${data.user.role === 'head_coach' ? ' (40% of Expected)' : ''}`
+                  ? `₹${getMaxSalary(data.user).toLocaleString()}${data.user.role === 'Head Coach' ? ' (40% of Expected)' : ''}`
                   : 'Not set'
               }
               disabled
@@ -586,7 +586,7 @@ function SalaryFormModal({ isOpen, onClose, data, month, year, onSuccess, monthl
           </div>
         </div>
 
-        {data.user.role === 'head_coach' && (
+        {data.user.role === 'Head Coach' && (
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <p className="text-sm text-blue-800 dark:text-blue-300">
               <strong>Head Coach Salary Calculation:</strong> 40% of Monthly Expected
