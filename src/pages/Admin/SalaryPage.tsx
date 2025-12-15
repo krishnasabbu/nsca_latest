@@ -80,13 +80,17 @@ export function SalaryPage() {
 
   const calculateStats = () => {
     const totalSalaries = filteredSalaries.reduce((sum, s) => sum + Number(s.salary), 0);
-    const paidCount = filteredSalaries.filter((s) => s.status === 'paid').length;
-    const pendingCount = filteredSalaries.filter((s) => s.status === 'pending').length;
+    const paidAmount = filteredSalaries
+      .filter((s) => s.status === 'paid')
+      .reduce((sum, s) => sum + Number(s.salary), 0);
+    const pendingAmount = filteredSalaries
+      .filter((s) => s.status === 'pending')
+      .reduce((sum, s) => sum + Number(s.salary), 0);
 
     return {
       totalSalaries,
-      paidCount,
-      pendingCount,
+      paidAmount,
+      pendingAmount,
       totalStaff: staff.length,
     };
   };
@@ -144,7 +148,9 @@ export function SalaryPage() {
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Paid</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.paidCount}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                ₹{stats.paidAmount.toLocaleString()}
+              </p>
             </div>
           </CardBody>
         </Card>
@@ -156,7 +162,9 @@ export function SalaryPage() {
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Pending</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.pendingCount}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                ₹{stats.pendingAmount.toLocaleString()}
+              </p>
             </div>
           </CardBody>
         </Card>
@@ -265,8 +273,24 @@ export function SalaryPage() {
                             <span className="capitalize">{salaryRecord.status}</span>
                           </span>
                         ) : (
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
-                            Not Set
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 w-fit ${
+                              getMaxSalaryForStaff(member) === 0
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            }`}
+                          >
+                            {getMaxSalaryForStaff(member) === 0 ? (
+                              <>
+                                <CheckCircle size={14} />
+                                <span>Paid</span>
+                              </>
+                            ) : (
+                              <>
+                                <Clock size={14} />
+                                <span>Pending</span>
+                              </>
+                            )}
                           </span>
                         )}
                       </td>
