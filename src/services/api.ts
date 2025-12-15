@@ -2,6 +2,7 @@ import { User, Batch, Content, Attendance, YoyoTestResult, Analytics, FeeRecord,
 import { cacheManager } from './cache';
 
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbwaJbGdp8dqvdjshJ_wJZBXPFvy3ccMXeEKfWSpEeWfJ5W-sb31q0W0wGKO47o4nM4Twg/exec';
+const STAFF_API_URL = 'https://script.google.com/macros/s/AKfycbyO6bQk8eCsu60GzL6hQwTiPByUcbpzokKIbQitJNp6X8K_fHtR5OGCUjbyDMlVf_75gQ/exec';
 
 const handleResponse = async (response: Response) => {
   const data = await response.json().catch(() => ({ error: 'Network error' }));
@@ -148,7 +149,7 @@ export const api = {
       return fetchWithCache(
         'staff_list',
         async () => {
-          const response = await fetch(`${API_BASE_URL}?action=getStaff`, {
+          const response = await fetch(`${STAFF_API_URL}?action=getStaff`, {
             redirect: 'follow',
           });
           const data = await handleResponse(response);
